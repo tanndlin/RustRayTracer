@@ -16,7 +16,6 @@ use crate::{
 pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
-    aspect_ratio: f32,
     fov: u8,
     look_from: Vec3,
     look_at: Vec3,
@@ -59,7 +58,6 @@ impl Camera {
         ];
 
         Camera {
-            aspect_ratio,
             image_width,
             image_height,
             fov: 90,
