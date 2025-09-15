@@ -78,6 +78,10 @@ impl Vec3 {
     pub(crate) fn reflect(&self, normal: Vec3) -> Vec3 {
         self.sub(normal.scale(2.0 * dot(*self, normal)))
     }
+
+    pub(crate) fn is_finite(&self) -> bool {
+        self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
+    }
 }
 
 pub fn min(u: Vec3, v: Vec3) -> Vec3 {

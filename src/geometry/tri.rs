@@ -12,22 +12,37 @@ pub struct Tri {
     pub v0: Vec3,
     pub v1: Vec3,
     pub v2: Vec3,
-    normal: Vec3,
+
+    pub n0: Option<Vec3>,
+    pub n1: Option<Vec3>,
+    pub n2: Option<Vec3>,
+
+    face_normal: Vec3,
     edge_ab: Vec3,
     edge_ac: Vec3,
 }
 
 impl Tri {
-    pub fn new(v0: Vec3, v1: Vec3, v2: Vec3) -> Self {
+    pub fn new(
+        v0: Vec3,
+        v1: Vec3,
+        v2: Vec3,
+        n0: Option<Vec3>,
+        n1: Option<Vec3>,
+        n2: Option<Vec3>,
+    ) -> Self {
         let edge_ab = v1.sub(v0);
         let edge_ac = v2.sub(v0);
-        let normal = cross(edge_ab, edge_ac);
+        let face_normal = cross(edge_ab, edge_ac);
 
         Tri {
             v0,
             v1,
             v2,
-            normal,
+            n0,
+            n1,
+            n2,
+            face_normal,
             edge_ab,
             edge_ac,
         }
@@ -40,7 +55,7 @@ impl Hittable for Tri {
         let dao = cross(ao, r.dir);
 
         // Backface culling
-        let determinant = -dot(r.dir, self.normal);
+        let determinant = -dot(r.dir, self.face_normal);
         if determinant < 1e-6 {
             return None;
         }
@@ -48,7 +63,7 @@ impl Hittable for Tri {
         let inv_det = 1.0 / determinant;
 
         // Calculate dst to triangle
-        let dst = dot(ao, self.normal) * inv_det;
+        let dst = dot(ao, self.face_normal) * inv_det;
         if dst < 0.0 {
             return None;
         }
@@ -67,10 +82,20 @@ impl Hittable for Tri {
         //     return false;
         // }
 
-        Some(HitResult {
-            normal: self.normal.normalize(),
-            t: dst,
-        })
+        let interpolated_normal =
+            if let (Some(n0), Some(n1), Some(n2)) = (self.n0, self.n1, self.n2) {
+                let w = 1.0 - u - v;
+                n0.scale(w).add(n1.scale(u)).add(n2.scale(v)).normalize()
+            } else {
+                self.face_normal.normalize()
+            };
+
+        let mut n = interpolated_normal.normalize();
+        if !n.is_finite() || n.length_squared() < 1e-6 {
+            n = self.face_normal.normalize(); // fallback
+        }
+
+        Some(HitResult { normal: n, t: dst })
     }
 
     fn get_bounds(&self) -> Bounds {
