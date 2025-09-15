@@ -23,6 +23,7 @@ pub fn parse_obj(_path: &str) -> Vec<Tri> {
             }
             "f" => {
                 if parts.len() < 4 {
+                    dbg!("Face with less than 3 vertices found, skipping");
                     continue;
                 }
                 let v_indices: Vec<usize> = parts[1..4]
@@ -32,8 +33,12 @@ pub fn parse_obj(_path: &str) -> Vec<Tri> {
                     .map(|idx| idx - 1) // OBJ indices are 1-based
                     .collect();
 
-                if v_indices.len() == 3
-                    && v_indices[0] < vertices.len()
+                if v_indices.len() > 3 {
+                    dbg!("Face with more than 3 vertices found, skipping");
+                    continue;
+                }
+
+                if v_indices[0] < vertices.len()
                     && v_indices[1] < vertices.len()
                     && v_indices[2] < vertices.len()
                 {

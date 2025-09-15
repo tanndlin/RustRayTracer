@@ -1,5 +1,3 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
-
 use crate::camera::Camera;
 use crate::geometry::{aabb::AABB, hittable::Hittable, mesh::Mesh, sphere::Sphere};
 use crate::util::vec3::Vec3;
@@ -26,7 +24,11 @@ fn main() {
 
     let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(aabb)];
     println!("Rendering...");
+
+    let start = std::time::Instant::now();
     let framebuffer = camera.render(&objects);
+    let duration = start.elapsed();
+    println!("Render time: {:?}", duration);
 
     let file = "output.ppm";
     println!("Writing to {}", file);
