@@ -1,7 +1,7 @@
 use crate::{hittable::Hittable, ray::Ray, tri::Tri};
 
 pub struct Mesh {
-    tris: Vec<Tri>,
+    pub tris: Vec<Tri>,
 }
 
 impl Mesh {

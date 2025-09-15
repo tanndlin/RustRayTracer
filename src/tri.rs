@@ -4,6 +4,7 @@ use crate::{
     vec3::Vec3,
 };
 
+#[derive(Clone, Copy, Debug)]
 pub struct Tri {
     pub v0: Vec3,
     pub v1: Vec3,

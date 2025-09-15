@@ -1,8 +1,10 @@
-use crate::{camera::Camera, mesh::Mesh, sphere::Sphere, tri::Tri, vec3::Vec3};
+use crate::{aabb::AABB, camera::Camera, mesh::Mesh, sphere::Sphere};
 
+mod aabb;
 mod camera;
 mod hittable;
 mod mesh;
+mod obj_parser;
 mod ray;
 mod sphere;
 mod tri;
@@ -19,30 +21,12 @@ fn main() {
         radius: 1.0,
     };
 
-    let a = Vec3 {
-        x: 5.0,
-        y: 2.0,
-        z: 0.0,
-    };
-
-    let b = Vec3 {
-        x: 5.0,
-        y: 3.0,
-        z: 0.0,
-    };
-
-    let c = Vec3 {
-        x: 5.0,
-        y: 2.0,
-        z: 1.0,
-    };
-
-    let tri_1 = Tri::new(c, b, a);
-
-    let tris = vec![tri_1];
+    let tris = obj_parser::parse_obj("src/Chess.obj");
     let mesh = Mesh::new(tris);
+    let aabb = AABB::new(mesh);
 
-    let objects: Vec<Box<dyn hittable::Hittable>> = vec![Box::new(sphere), Box::new(mesh)];
+    let objects: Vec<Box<dyn hittable::Hittable>> = vec![Box::new(sphere), Box::new(aabb)];
+    println!("Rendering...");
     let framebuffer = camera.render(&objects);
 
     let file = "output.ppm";

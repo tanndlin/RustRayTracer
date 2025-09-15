@@ -57,4 +57,20 @@ impl Vec3 {
             z: self.z + scale.z,
         }
     }
+
+    pub(crate) fn mul(&self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+
+    pub(crate) fn invert(&self) -> Vec3 {
+        Vec3 {
+            x: 1.0 / self.x,
+            y: 1.0 / self.y,
+            z: 1.0 / self.z,
+        }
+    }
 }
