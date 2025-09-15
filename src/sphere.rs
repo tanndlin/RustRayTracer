@@ -1,4 +1,5 @@
 use crate::{
+    bounds::Bounds,
     hittable::Hittable,
     ray::{Ray, dot},
     vec3::Vec3,
@@ -18,5 +19,18 @@ impl Hittable for Sphere {
 
         let discriminant = h * h - a * c;
         discriminant >= 0.0
+    }
+
+    fn get_bounds(&self) -> crate::bounds::Bounds {
+        let r_vec = Vec3 {
+            x: self.radius,
+            y: self.radius,
+            z: self.radius,
+        };
+
+        Bounds {
+            min: self.center.sub(r_vec),
+            max: self.center.add(r_vec),
+        }
     }
 }

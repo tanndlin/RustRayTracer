@@ -74,3 +74,19 @@ impl Vec3 {
         }
     }
 }
+
+pub fn min(u: Vec3, v: Vec3) -> Vec3 {
+    Vec3 {
+        x: u.x.min(v.x),
+        y: u.y.min(v.y),
+        z: u.z.min(v.z),
+    }
+}
+
+pub fn max(u: Vec3, v: Vec3) -> Vec3 {
+    Vec3 {
+        x: u.x.max(v.x),
+        y: u.y.max(v.y),
+        z: u.z.max(v.z),
+    }
+}

@@ -1,7 +1,8 @@
 use crate::{
+    bounds::Bounds,
     hittable::Hittable,
     ray::{Ray, cross, dot},
-    vec3::Vec3,
+    vec3::{Vec3, max, min},
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -65,5 +66,12 @@ impl Hittable for Tri {
         // }
 
         true
+    }
+
+    fn get_bounds(&self) -> Bounds {
+        let min = min(self.v0, min(self.v1, self.v2));
+        let max = max(self.v0, max(self.v1, self.v2));
+
+        Bounds { min, max }
     }
 }

@@ -1,17 +1,26 @@
-use crate::{hittable::Hittable, ray::Ray, tri::Tri};
+use crate::{bounds::Bounds, hittable::Hittable, ray::Ray};
 
-pub struct Mesh {
-    pub tris: Vec<Tri>,
+pub struct Mesh<T: Hittable> {
+    pub children: Vec<T>,
 }
 
-impl Mesh {
-    pub fn new(tris: Vec<Tri>) -> Self {
-        Mesh { tris }
+impl<T: Hittable> Mesh<T> {
+    pub fn new(children: Vec<T>) -> Self {
+        Mesh { children }
     }
 }
 
-impl Hittable for Mesh {
+impl<T: Hittable> Hittable for Mesh<T> {
     fn hit(&self, ray: &Ray) -> bool {
-        self.tris.iter().any(|t| t.hit(ray))
+        self.children.iter().any(|t| t.hit(ray))
+    }
+
+    fn get_bounds(&self) -> Bounds {
+        let mut bounds = self.children[0].get_bounds();
+        for tri in &self.children[1..] {
+            bounds.expand_to_contain(&tri.get_bounds());
+        }
+
+        bounds
     }
 }

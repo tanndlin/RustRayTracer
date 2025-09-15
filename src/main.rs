@@ -1,6 +1,7 @@
 use crate::{aabb::AABB, camera::Camera, mesh::Mesh, sphere::Sphere};
 
 mod aabb;
+mod bounds;
 mod camera;
 mod hittable;
 mod mesh;

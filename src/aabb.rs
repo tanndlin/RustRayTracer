@@ -1,67 +1,47 @@
-use crate::{hittable::Hittable, mesh::Mesh, ray::Ray, tri::Tri, vec3::Vec3};
+use crate::{bounds::Bounds, hittable::Hittable, mesh::Mesh, ray::Ray};
 
-pub enum AABBType {
-    Recursive(RecursiveAABB),
-    Leaf(Vec<Box<dyn Hittable>>),
+pub enum AABBType<T> {
+    Recursive(RecursiveAABB<T>),
+    Leaf(Vec<T>),
 }
 
 #[allow(clippy::upper_case_acronyms)]
-pub struct AABB {
-    pub aabb_type: AABBType,
-
-    pub a: Vec3,
-    pub b: Vec3,
+pub struct AABB<T> {
+    pub aabb_type: AABBType<T>,
+    pub bounds: Bounds,
 }
 
-impl AABB {
-    pub(crate) fn new(mesh: Mesh) -> Self {
-        let (a, b) = Self::calc_bounds(&mesh.tris);
+impl<T: Hittable> AABB<T> {
+    pub(crate) fn new(mesh: Mesh<T>) -> Self {
+        let bounds = Self::calc_bounds(&mesh.children);
 
-        let num_children = mesh.tris.len();
+        let num_children = mesh.children.len();
         if num_children < 10 {
             return AABB {
-                aabb_type: AABBType::Leaf(
-                    mesh.tris
-                        .into_iter()
-                        .map(|t| Box::new(t) as Box<dyn Hittable>)
-                        .collect(),
-                ),
-                a,
-                b,
+                aabb_type: AABBType::Leaf(mesh.children),
+                bounds,
             };
         }
 
-        let extent = b.sub(a);
-        let axis = if extent.x >= extent.y && extent.x >= extent.z {
-            0
-        } else if extent.y >= extent.x && extent.y >= extent.z {
-            1
-        } else {
-            2
-        };
+        let longest_axis = bounds.longest_axis();
 
-        let mut sorted_tris = mesh.tris;
-        sorted_tris.sort_by(|t1, t2| {
-            let centroid1 = (t1.v0.x + t1.v1.x + t1.v2.x) / 3.0;
-            let centroid2 = (t2.v0.x + t2.v1.x + t2.v2.x) / 3.0;
-            match axis {
-                0 => centroid1.partial_cmp(&centroid2).unwrap(),
-                1 => {
-                    let centroid1 = (t1.v0.y + t1.v1.y + t1.v2.y) / 3.0;
-                    let centroid2 = (t2.v0.y + t2.v1.y + t2.v2.y) / 3.0;
-                    centroid1.partial_cmp(&centroid2).unwrap()
-                }
-                _ => {
-                    let centroid1 = (t1.v0.z + t1.v1.z + t1.v2.z) / 3.0;
-                    let centroid2 = (t2.v0.z + t2.v1.z + t2.v2.z) / 3.0;
-                    centroid1.partial_cmp(&centroid2).unwrap()
-                }
+        let mut sorted_tris = mesh.children;
+        sorted_tris.sort_by(|a, b| {
+            let a_bounds = a.get_bounds();
+            let b_bounds = b.get_bounds();
+            let a_center = a_bounds.min.add(a_bounds.max).scale(0.5);
+            let b_center = b_bounds.min.add(b_bounds.max).scale(0.5);
+
+            match longest_axis {
+                crate::bounds::Axis::X => a_center.x.partial_cmp(&b_center.x).unwrap(),
+                crate::bounds::Axis::Y => a_center.y.partial_cmp(&b_center.y).unwrap(),
+                crate::bounds::Axis::Z => a_center.z.partial_cmp(&b_center.z).unwrap(),
             }
         });
 
         let mid = num_children / 2;
-        let left_tris = sorted_tris[..mid].to_vec();
-        let right_tris = sorted_tris[mid..].to_vec();
+        let left_tris = sorted_tris.split_off(mid);
+        let right_tris = sorted_tris;
 
         let left_aabb = AABB::new(Mesh::new(left_tris));
         let right_aabb = AABB::new(Mesh::new(right_tris));
@@ -70,75 +50,23 @@ impl AABB {
                 Box::new(left_aabb),
                 Box::new(right_aabb),
             )),
-            a,
-            b,
+            bounds,
         }
     }
 
-    fn slab_method(&self, ray: &Ray) -> bool {
-        let t0s = self.a.sub(ray.origin).mul(ray.inv_dir);
-        let t1s = self.b.sub(ray.origin).mul(ray.inv_dir);
-
-        let tsmalls = Vec3 {
-            x: t0s.x.min(t1s.x),
-            y: t0s.y.min(t1s.y),
-            z: t0s.z.min(t1s.z),
-        };
-        let tbigs = Vec3 {
-            x: t0s.x.max(t1s.x),
-            y: t0s.y.max(t1s.y),
-            z: t0s.z.max(t1s.z),
-        };
-
-        let tmin = tsmalls.x.max(tsmalls.y).max(tsmalls.z);
-        let tmax = tbigs.x.min(tbigs.y).min(tbigs.z);
-
-        tmax >= tmin.max(0.0)
-    }
-
-    fn calc_bounds(tris: &Vec<Tri>) -> (Vec3, Vec3) {
-        let mut min = Vec3 {
-            x: f64::INFINITY,
-            y: f64::INFINITY,
-            z: f64::INFINITY,
-        };
-        let mut max = Vec3 {
-            x: f64::NEG_INFINITY,
-            y: f64::NEG_INFINITY,
-            z: f64::NEG_INFINITY,
-        };
-
-        for tri in tris {
-            for v in [&tri.v0, &tri.v1, &tri.v2] {
-                if v.x < min.x {
-                    min.x = v.x;
-                }
-                if v.y < min.y {
-                    min.y = v.y;
-                }
-                if v.z < min.z {
-                    min.z = v.z;
-                }
-
-                if v.x > max.x {
-                    max.x = v.x;
-                }
-                if v.y > max.y {
-                    max.y = v.y;
-                }
-                if v.z > max.z {
-                    max.z = v.z;
-                }
-            }
+    fn calc_bounds(tris: &[T]) -> Bounds {
+        let mut bounds = tris[0].get_bounds();
+        for tri in &tris[1..] {
+            bounds.expand_to_contain(&tri.get_bounds());
         }
 
-        (min, max)
+        bounds
     }
 }
 
-impl Hittable for AABB {
+impl<T: Hittable> Hittable for AABB<T> {
     fn hit(&self, ray: &Ray) -> bool {
-        match self.slab_method(ray) {
+        match self.bounds.hit(ray) {
             false => false,
             true => match &self.aabb_type {
                 AABBType::Recursive(c) => c.hit(ray),
@@ -146,15 +74,19 @@ impl Hittable for AABB {
             },
         }
     }
+
+    fn get_bounds(&self) -> Bounds {
+        self.bounds
+    }
 }
 
-pub struct RecursiveAABB {
-    pub left: Box<AABB>,
-    pub right: Box<AABB>,
+pub struct RecursiveAABB<T> {
+    pub left: Box<AABB<T>>,
+    pub right: Box<AABB<T>>,
 }
 
-impl RecursiveAABB {
-    pub fn new(left: Box<AABB>, right: Box<AABB>) -> Self {
+impl<T: Hittable> RecursiveAABB<T> {
+    pub fn new(left: Box<AABB<T>>, right: Box<AABB<T>>) -> Self {
         Self { left, right }
     }
 
