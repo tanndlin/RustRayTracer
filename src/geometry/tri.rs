@@ -1,8 +1,7 @@
 use crate::{
-    bounds::Bounds,
-    hittable::Hittable,
-    ray::{Ray, cross, dot},
-    vec3::{Vec3, max, min},
+    geometry::{bounds::Bounds, hittable::Hittable},
+    util::ray::Ray,
+    util::vec3::{Vec3, cross, dot, max, min},
 };
 
 #[derive(Clone, Copy, Debug)]

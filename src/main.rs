@@ -1,20 +1,16 @@
-use crate::{aabb::AABB, camera::Camera, mesh::Mesh, sphere::Sphere};
+use crate::camera::Camera;
+use crate::geometry::{aabb::AABB, hittable::Hittable, mesh::Mesh, sphere::Sphere};
+use crate::util::vec3::Vec3;
 
-mod aabb;
-mod bounds;
 mod camera;
-mod hittable;
-mod mesh;
+mod geometry;
 mod obj_parser;
-mod ray;
-mod sphere;
-mod tri;
-mod vec3;
+mod util;
 
 fn main() {
     let camera = Camera::new(16.0 / 9.0, 400);
     let sphere = Sphere {
-        center: vec3::Vec3 {
+        center: Vec3 {
             x: 5.0,
             y: 0.0,
             z: 0.0,
@@ -26,7 +22,7 @@ fn main() {
     let mesh = Mesh::new(tris);
     let aabb = AABB::new(mesh);
 
-    let objects: Vec<Box<dyn hittable::Hittable>> = vec![Box::new(sphere), Box::new(aabb)];
+    let objects: Vec<Box<dyn Hittable>> = vec![Box::new(sphere), Box::new(aabb)];
     println!("Rendering...");
     let framebuffer = camera.render(&objects);
 

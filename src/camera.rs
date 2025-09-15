@@ -1,9 +1,9 @@
 use std::f64::consts::PI;
 
 use crate::{
-    hittable::Hittable,
-    ray::{Ray, cross},
-    vec3::Vec3,
+    geometry::hittable::Hittable,
+    util::ray::Ray,
+    util::vec3::{Vec3, cross},
 };
 
 pub struct Camera {

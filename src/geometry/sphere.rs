@@ -1,8 +1,7 @@
 use crate::{
-    bounds::Bounds,
-    hittable::Hittable,
-    ray::{Ray, dot},
-    vec3::Vec3,
+    geometry::{bounds::Bounds, hittable::Hittable},
+    util::ray::Ray,
+    util::vec3::{Vec3, dot},
 };
 
 pub struct Sphere {
@@ -21,7 +20,7 @@ impl Hittable for Sphere {
         discriminant >= 0.0
     }
 
-    fn get_bounds(&self) -> crate::bounds::Bounds {
+    fn get_bounds(&self) -> Bounds {
         let r_vec = Vec3 {
             x: self.radius,
             y: self.radius,

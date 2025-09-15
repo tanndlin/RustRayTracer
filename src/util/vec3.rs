@@ -4,6 +4,7 @@ pub struct Vec3 {
     pub y: f64,
     pub z: f64,
 }
+
 impl Vec3 {
     pub fn new() -> Self {
         Self {
@@ -88,5 +89,17 @@ pub fn max(u: Vec3, v: Vec3) -> Vec3 {
         x: u.x.max(v.x),
         y: u.y.max(v.y),
         z: u.z.max(v.z),
+    }
+}
+
+pub fn dot(u: Vec3, v: Vec3) -> f64 {
+    u.x * v.x + u.y * v.y + u.z * v.z
+}
+
+pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
+    Vec3 {
+        x: u.y * v.z - u.z * v.y,
+        y: u.z * v.x - u.x * v.z,
+        z: u.x * v.y - u.y * v.x,
     }
 }

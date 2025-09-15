@@ -1,6 +1,6 @@
 use crate::{
-    ray::Ray,
-    vec3::{Vec3, max, min},
+    util::ray::Ray,
+    util::vec3::{Vec3, max, min},
 };
 
 pub enum Axis {

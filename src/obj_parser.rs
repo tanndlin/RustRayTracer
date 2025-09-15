@@ -1,4 +1,4 @@
-use crate::{tri::Tri, vec3::Vec3};
+use crate::{geometry::tri::Tri, util::vec3::Vec3};
 
 pub fn parse_obj(_path: &str) -> Vec<Tri> {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");

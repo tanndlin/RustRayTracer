@@ -1,4 +1,7 @@
-use crate::{bounds::Bounds, hittable::Hittable, ray::Ray};
+use crate::{
+    geometry::{bounds::Bounds, hittable::Hittable},
+    util::ray::Ray,
+};
 
 pub struct Mesh<T: Hittable> {
     pub children: Vec<T>,

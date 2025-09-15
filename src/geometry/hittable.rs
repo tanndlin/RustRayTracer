@@ -1,4 +1,4 @@
-use crate::{bounds::Bounds, ray::Ray};
+use crate::{geometry::bounds::Bounds, util::ray::Ray};
 
 pub trait Hittable {
     fn hit(&self, ray: &Ray) -> bool;

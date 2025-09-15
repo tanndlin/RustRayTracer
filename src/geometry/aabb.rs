@@ -1,4 +1,11 @@
-use crate::{bounds::Bounds, hittable::Hittable, mesh::Mesh, ray::Ray};
+use crate::{
+    geometry::{
+        bounds::{Axis, Bounds},
+        hittable::Hittable,
+        mesh::Mesh,
+    },
+    util::ray::Ray,
+};
 
 pub enum AABBType<T> {
     Recursive(RecursiveAABB<T>),
@@ -33,9 +40,9 @@ impl<T: Hittable> AABB<T> {
             let b_center = b_bounds.min.add(b_bounds.max).scale(0.5);
 
             match longest_axis {
-                crate::bounds::Axis::X => a_center.x.partial_cmp(&b_center.x).unwrap(),
-                crate::bounds::Axis::Y => a_center.y.partial_cmp(&b_center.y).unwrap(),
-                crate::bounds::Axis::Z => a_center.z.partial_cmp(&b_center.z).unwrap(),
+                Axis::X => a_center.x.partial_cmp(&b_center.x).unwrap(),
+                Axis::Y => a_center.y.partial_cmp(&b_center.y).unwrap(),
+                Axis::Z => a_center.z.partial_cmp(&b_center.z).unwrap(),
             }
         });
 
