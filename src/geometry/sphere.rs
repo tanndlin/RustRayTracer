@@ -10,6 +10,7 @@ use crate::{
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f64,
+    pub material_index: usize,
 }
 
 impl Hittable for Sphere {
@@ -28,13 +29,18 @@ impl Hittable for Sphere {
         let t1 = (h - sqrt_d) / a;
         let t2 = (h + sqrt_d) / a;
         let t = if t1 >= 0.0 { t1 } else { t2 };
-        if t < 0.0 {
+        if t < 1e-6 {
             return None;
         }
 
         let point = ray.at(t);
         let normal = point.sub(self.center).scale(1.0 / self.radius);
-        Some(HitResult { normal, t })
+        Some(HitResult {
+            normal,
+            t,
+            point,
+            material_index: self.material_index,
+        })
     }
 
     fn get_bounds(&self) -> Bounds {

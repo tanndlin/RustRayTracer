@@ -14,7 +14,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn sub(&self, other: Vec3) -> Vec3 {
+    pub fn sub(&self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self.x - other.x,
             y: self.y - other.y,
@@ -22,11 +22,11 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn length_squared(&self) -> f64 {
+    pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
-    pub(crate) fn normalize(&self) -> Vec3 {
+    pub fn normalize(&self) -> Vec3 {
         let length = self.length_squared().powf(0.5);
         Vec3 {
             x: self.x / length,
@@ -35,7 +35,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn scale(&self, factor: f64) -> Vec3 {
+    pub fn scale(&self, factor: f64) -> Vec3 {
         Vec3 {
             x: self.x * factor,
             y: self.y * factor,
@@ -43,7 +43,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn negate(&self) -> Vec3 {
+    pub fn negate(&self) -> Vec3 {
         Vec3 {
             x: -self.x,
             y: -self.y,
@@ -51,7 +51,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn add(&self, scale: Vec3) -> Vec3 {
+    pub fn add(&self, scale: Vec3) -> Vec3 {
         Vec3 {
             x: self.x + scale.x,
             y: self.y + scale.y,
@@ -59,7 +59,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn mul(&self, other: Vec3) -> Vec3 {
+    pub fn mul(&self, other: Vec3) -> Vec3 {
         Vec3 {
             x: self.x * other.x,
             y: self.y * other.y,
@@ -67,7 +67,7 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn invert(&self) -> Vec3 {
+    pub fn invert(&self) -> Vec3 {
         Vec3 {
             x: 1.0 / self.x,
             y: 1.0 / self.y,
@@ -75,11 +75,11 @@ impl Vec3 {
         }
     }
 
-    pub(crate) fn reflect(&self, normal: Vec3) -> Vec3 {
+    pub fn reflect(&self, normal: Vec3) -> Vec3 {
         self.sub(normal.scale(2.0 * dot(*self, normal)))
     }
 
-    pub(crate) fn is_finite(&self) -> bool {
+    pub fn is_finite(&self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }
 }

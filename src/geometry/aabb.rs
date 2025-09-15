@@ -21,7 +21,7 @@ pub struct AABB<T> {
 }
 
 impl<T: Hittable> AABB<T> {
-    pub(crate) fn new(mesh: Mesh<T>) -> Self {
+    pub fn new(mesh: Mesh<T>) -> Self {
         let bounds = Self::calc_bounds(&mesh.children);
 
         let num_children = mesh.children.len();

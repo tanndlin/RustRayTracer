@@ -4,6 +4,7 @@ use crate::util::vec3::Vec3;
 
 mod camera;
 mod geometry;
+mod material;
 mod obj_parser;
 mod util;
 
@@ -16,6 +17,7 @@ fn main() {
             z: 0.0,
         },
         radius: 1.0,
+        material_index: 0,
     };
 
     let tris = obj_parser::parse_obj("src/Chess.obj");

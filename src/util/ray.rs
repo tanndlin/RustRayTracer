@@ -7,7 +7,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub(crate) fn new(origin: Vec3, dir: Vec3) -> Self {
+    pub fn new(origin: Vec3, dir: Vec3) -> Self {
         Self {
             origin,
             dir,
@@ -16,7 +16,7 @@ impl Ray {
     }
 
     // Projects ray to a certain distance
-    pub(crate) fn at(&self, dst: f64) -> Vec3 {
+    pub fn at(&self, dst: f64) -> Vec3 {
         self.origin.add(self.dir.scale(dst))
     }
 }

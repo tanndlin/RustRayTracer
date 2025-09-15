@@ -16,7 +16,7 @@ pub struct Bounds {
 }
 
 impl Bounds {
-    pub(crate) fn expand_to_contain(&mut self, get_bounds: &Bounds) {
+    pub fn expand_to_contain(&mut self, get_bounds: &Bounds) {
         self.min = min(self.min, get_bounds.min);
         self.max = max(self.max, get_bounds.max);
     }

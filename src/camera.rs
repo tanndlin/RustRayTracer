@@ -5,6 +5,7 @@ const MAX_BOUNCES: u32 = 10;
 
 use crate::{
     geometry::hittable::Hittable,
+    material::{lambertian::Lambertian, material_trait::Material},
     util::{
         hit_result::HitResult,
         ray::Ray,
@@ -20,11 +21,43 @@ pub struct Camera {
     look_from: Vec3,
     look_at: Vec3,
     up: Vec3,
+    pub materials: Vec<Lambertian>,
 }
 
 impl Camera {
     pub fn new(aspect_ratio: f32, image_width: u32) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
+        let materials = vec![
+            Lambertian {
+                albedo: Vec3 {
+                    x: 0.8,
+                    y: 0.3,
+                    z: 0.3,
+                },
+            },
+            Lambertian {
+                albedo: Vec3 {
+                    x: 0.8,
+                    y: 0.8,
+                    z: 0.0,
+                },
+            },
+            Lambertian {
+                albedo: Vec3 {
+                    x: 0.8,
+                    y: 0.6,
+                    z: 0.2,
+                },
+            },
+            Lambertian {
+                albedo: Vec3 {
+                    x: 0.1,
+                    y: 0.2,
+                    z: 0.5,
+                },
+            },
+        ];
+
         Camera {
             aspect_ratio,
             image_width,
@@ -41,6 +74,7 @@ impl Camera {
                 y: 1.0,
                 z: 0.0,
             },
+            materials,
         }
     }
 
@@ -99,40 +133,30 @@ impl Camera {
         }
 
         let mut hit_result: Option<HitResult> = None;
-        let mut final_color = Vec3::new();
 
         for object in objects {
-            if let Some(hit) = object.hit(ray) {
-                if hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t {
-                    hit_result = Some(hit);
-                    final_color = Vec3 {
-                        x: 1.0 / MAX_BOUNCES as f64,
-                        y: 1.0 / MAX_BOUNCES as f64,
-                        z: 1.0 / MAX_BOUNCES as f64,
-                    };
-                }
+            if let Some(hit) = object.hit(ray)
+                && (hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t)
+            {
+                hit_result = Some(hit);
             }
         }
 
         if let Some(hit) = hit_result {
-            let origin = ray.at(hit.t - 1e-3);
-            let new_dir = ray.dir.reflect(hit.normal);
-            let new_ray = Ray::new(origin, new_dir);
-            return self
-                .ray_color(&new_ray, objects, depth + 1)
-                .add(final_color);
+            let material = &self.materials[hit.material_index];
+            let (scattered_ray, attenuation) = material.scatter(ray, &hit);
+
+            return attenuation.mul(self.ray_color(&scattered_ray, objects, depth + 1));
         }
 
         // Background gradient
-        // let unit_direction = ray.dir.normalize();
-        // let t = 0.5 * (unit_direction.y + 1.0);
-        // Vec3 {
-        //     x: (1.0 - t) + t * 0.5,
-        //     y: (1.0 - t) + t * 0.7,
-        //     z: (1.0 - t) + t * 1.0,
-        // }
-
-        Vec3::new()
+        let unit_direction = ray.dir.normalize();
+        let t = 0.5 * (unit_direction.y + 1.0);
+        Vec3 {
+            x: (1.0 - t) + t * 0.5,
+            y: (1.0 - t) + t * 0.7,
+            z: (1.0 - t) + t * 1.0,
+        }
     }
 }
 

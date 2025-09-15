@@ -20,6 +20,8 @@ pub struct Tri {
     face_normal: Vec3,
     edge_ab: Vec3,
     edge_ac: Vec3,
+
+    material_index: usize,
 }
 
 impl Tri {
@@ -45,6 +47,7 @@ impl Tri {
             face_normal,
             edge_ab,
             edge_ac,
+            material_index: 0,
         }
     }
 }
@@ -95,7 +98,13 @@ impl Hittable for Tri {
             n = self.face_normal.normalize(); // fallback
         }
 
-        Some(HitResult { normal: n, t: dst })
+        let point = r.at(dst);
+        Some(HitResult {
+            normal: n,
+            t: dst,
+            point,
+            material_index: self.material_index,
+        })
     }
 
     fn get_bounds(&self) -> Bounds {

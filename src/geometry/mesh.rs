@@ -11,9 +11,7 @@ impl<T: Hittable> Mesh<T> {
     pub fn new(children: Vec<T>) -> Self {
         Mesh { children }
     }
-}
 
-impl<T: Hittable> Hittable for Mesh<T> {
     fn hit(&self, ray: &Ray) -> Option<HitResult> {
         self.children
             .iter()
