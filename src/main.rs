@@ -1,3 +1,5 @@
+use std::sync::atomic::{AtomicUsize, Ordering};
+
 use crate::camera::Camera;
 use crate::geometry::{aabb::AABB, hittable::Hittable, mesh::Mesh, sphere::Sphere};
 use crate::util::vec3::Vec3;
@@ -8,7 +10,7 @@ mod obj_parser;
 mod util;
 
 fn main() {
-    let camera = Camera::new(16.0 / 9.0, 400);
+    let camera = Camera::new(16.0 / 9.0, 1000);
     let sphere = Sphere {
         center: Vec3 {
             x: 5.0,
@@ -22,7 +24,7 @@ fn main() {
     let mesh = Mesh::new(tris);
     let aabb = AABB::new(mesh);
 
-    let objects: Vec<Box<dyn Hittable>> = vec![Box::new(sphere), Box::new(aabb)];
+    let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(aabb)];
     println!("Rendering...");
     let framebuffer = camera.render(&objects);
 

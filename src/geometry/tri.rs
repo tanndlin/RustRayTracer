@@ -1,7 +1,10 @@
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
-    util::ray::Ray,
-    util::vec3::{Vec3, cross, dot, max, min},
+    util::{
+        hit_result::HitResult,
+        ray::Ray,
+        vec3::{Vec3, cross, dot, max, min},
+    },
 };
 
 #[derive(Clone, Copy, Debug)]
@@ -32,14 +35,14 @@ impl Tri {
 }
 
 impl Hittable for Tri {
-    fn hit(&self, r: &Ray) -> bool {
+    fn hit(&self, r: &Ray) -> Option<HitResult> {
         let ao = r.origin.sub(self.v0);
         let dao = cross(ao, r.dir);
 
         // Backface culling
         let determinant = -dot(r.dir, self.normal);
         if determinant < 1e-6 {
-            return false;
+            return None;
         }
 
         let inv_det = 1.0 / determinant;
@@ -47,24 +50,27 @@ impl Hittable for Tri {
         // Calculate dst to triangle
         let dst = dot(ao, self.normal) * inv_det;
         if dst < 0.0 {
-            return false;
+            return None;
         }
 
         let u = dot(self.edge_ac, dao) * inv_det;
         if !(0.0..=1.0).contains(&u) {
-            return false;
+            return None;
         }
 
         let v = -dot(self.edge_ab, dao) * inv_det;
         if v < 0.0 || u + v > 1.0 {
-            return false;
+            return None;
         }
 
         // if !ray_t.contains(dst){
         //     return false;
         // }
 
-        true
+        Some(HitResult {
+            normal: self.normal.normalize(),
+            t: dst,
+        })
     }
 
     fn get_bounds(&self) -> Bounds {

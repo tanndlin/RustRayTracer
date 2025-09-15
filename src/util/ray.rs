@@ -14,4 +14,9 @@ impl Ray {
             inv_dir: dir.invert().normalize(),
         }
     }
+
+    // Projects ray to a certain distance
+    pub(crate) fn at(&self, dst: f64) -> Vec3 {
+        self.origin.add(self.dir.scale(dst))
+    }
 }

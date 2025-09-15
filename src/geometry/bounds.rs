@@ -32,7 +32,7 @@ impl Bounds {
         }
     }
 
-    pub fn hit(&self, ray: &Ray) -> bool {
+    pub fn hit(&self, ray: &Ray) -> Option<f64> {
         // Slab method
         let t0s = self.min.sub(ray.origin).mul(ray.inv_dir);
         let t1s = self.max.sub(ray.origin).mul(ray.inv_dir);
@@ -51,6 +51,10 @@ impl Bounds {
         let tmin = tsmalls.x.max(tsmalls.y).max(tsmalls.z);
         let tmax = tbigs.x.min(tbigs.y).min(tbigs.z);
 
-        tmax >= tmin.max(0.0)
+        if tmax >= tmin.max(0.0) && tmax > 0.0 {
+            Some(tmin)
+        } else {
+            None
+        }
     }
 }

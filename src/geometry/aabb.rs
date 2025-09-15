@@ -4,7 +4,7 @@ use crate::{
         hittable::Hittable,
         mesh::Mesh,
     },
-    util::ray::Ray,
+    util::{hit_result::HitResult, ray::Ray},
 };
 
 pub enum AABBType<T> {
@@ -72,13 +72,19 @@ impl<T: Hittable> AABB<T> {
 }
 
 impl<T: Hittable> Hittable for AABB<T> {
-    fn hit(&self, ray: &Ray) -> bool {
-        match self.bounds.hit(ray) {
-            false => false,
-            true => match &self.aabb_type {
-                AABBType::Recursive(c) => c.hit(ray),
-                AABBType::Leaf(children) => children.iter().any(|c| c.hit(ray)),
-            },
+    fn hit(&self, ray: &Ray) -> Option<HitResult> {
+        self.bounds.hit(ray)?;
+
+        match &self.aabb_type {
+            AABBType::Recursive(c) => c.hit(ray),
+            AABBType::Leaf(children) => {
+                for child in children {
+                    if let Some(hit) = child.hit(ray) {
+                        return Some(hit);
+                    }
+                }
+                None
+            }
         }
     }
 
@@ -97,7 +103,31 @@ impl<T: Hittable> RecursiveAABB<T> {
         Self { left, right }
     }
 
-    pub fn hit(&self, ray: &Ray) -> bool {
-        self.left.hit(ray) || self.right.hit(ray)
+    pub fn hit(&self, ray: &Ray) -> Option<HitResult> {
+        let left_t = self.left.bounds.hit(ray);
+        let right_t = self.right.bounds.hit(ray);
+
+        match (left_t, right_t) {
+            (Some(_), Some(_)) => {
+                let left_hit = self.left.hit(ray);
+                let right_hit = self.right.hit(ray);
+
+                match (left_hit, right_hit) {
+                    (Some(lh), Some(rh)) => {
+                        if lh.t < rh.t {
+                            Some(lh)
+                        } else {
+                            Some(rh)
+                        }
+                    }
+                    (Some(lh), None) => Some(lh),
+                    (None, Some(rh)) => Some(rh),
+                    (None, None) => None,
+                }
+            }
+            (Some(_), None) => self.left.hit(ray),
+            (None, Some(_)) => self.right.hit(ray),
+            (None, None) => None,
+        }
     }
 }

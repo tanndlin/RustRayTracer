@@ -1,6 +1,6 @@
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
-    util::ray::Ray,
+    util::{hit_result::HitResult, ray::Ray},
 };
 
 pub struct Mesh<T: Hittable> {
@@ -14,8 +14,11 @@ impl<T: Hittable> Mesh<T> {
 }
 
 impl<T: Hittable> Hittable for Mesh<T> {
-    fn hit(&self, ray: &Ray) -> bool {
-        self.children.iter().any(|t| t.hit(ray))
+    fn hit(&self, ray: &Ray) -> Option<HitResult> {
+        self.children
+            .iter()
+            .filter_map(|t| t.hit(ray))
+            .min_by(|a, b| a.t.partial_cmp(&b.t).unwrap_or(std::cmp::Ordering::Equal))
     }
 
     fn get_bounds(&self) -> Bounds {

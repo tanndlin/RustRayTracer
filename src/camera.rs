@@ -1,9 +1,15 @@
+use rayon::prelude::*;
 use std::f64::consts::PI;
+
+const MAX_BOUNCES: u32 = 10;
 
 use crate::{
     geometry::hittable::Hittable,
-    util::ray::Ray,
-    util::vec3::{Vec3, cross},
+    util::{
+        hit_result::HitResult,
+        ray::Ray,
+        vec3::{Vec3, cross},
+    },
 };
 
 pub struct Camera {
@@ -38,7 +44,7 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, objects: &Vec<Box<dyn Hittable>>) -> Vec<Vec3> {
+    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Vec3> {
         // Determine viewport dimensions.
         let theta = degrees_to_radians(self.fov);
         let h = f64::tan(theta / 2.0);
@@ -69,32 +75,64 @@ impl Camera {
             .add(pixel_delta_u.scale(0.5))
             .add(pixel_delta_v.scale(0.5));
 
-        let mut frame_buffer = vec![];
+        let frame_buffer: Vec<Vec3> = (0..self.image_height)
+            .into_par_iter()
+            .flat_map_iter(|y| {
+                (0..self.image_width).map(move |x| {
+                    let pixel_loc = pixel00_loc
+                        .add(pixel_delta_u.scale(x as f64))
+                        .add(pixel_delta_v.scale(y as f64));
+                    let dir = pixel_loc.sub(self.look_from).normalize();
+                    let ray = Ray::new(self.look_from, dir);
 
-        for y in 0..self.image_height {
-            for x in 0..self.image_width {
-                let pixel_loc = pixel00_loc
-                    .add(pixel_delta_u.scale(x as f64))
-                    .add(pixel_delta_v.scale(y as f64));
-                let dir = pixel_loc.sub(self.look_from).normalize();
-                let ray = Ray::new(self.look_from, dir);
+                    self.ray_color(&ray, objects, 0)
+                })
+            })
+            .collect();
 
-                let mut color = Vec3::new();
-                for object in objects {
-                    if object.hit(&ray) {
-                        color = Vec3 {
-                            x: 1.0,
-                            y: 0.0,
-                            z: 0.0,
-                        };
-                    }
+        frame_buffer
+    }
+
+    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Vec3 {
+        if depth >= MAX_BOUNCES as u8 {
+            return Vec3::new();
+        }
+
+        let mut hit_result: Option<HitResult> = None;
+        let mut final_color = Vec3::new();
+
+        for object in objects {
+            if let Some(hit) = object.hit(ray) {
+                if hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t {
+                    hit_result = Some(hit);
+                    final_color = Vec3 {
+                        x: 1.0 / MAX_BOUNCES as f64,
+                        y: 1.0 / MAX_BOUNCES as f64,
+                        z: 1.0 / MAX_BOUNCES as f64,
+                    };
                 }
-
-                frame_buffer.push(color);
             }
         }
 
-        frame_buffer
+        if let Some(hit) = hit_result {
+            let origin = ray.at(hit.t - 1e-6);
+            let new_dir = hit.normal;
+            let new_ray = Ray::new(origin, new_dir);
+            return self
+                .ray_color(&new_ray, objects, depth + 1)
+                .add(final_color);
+        }
+
+        // Background gradient
+        // let unit_direction = ray.dir.normalize();
+        // let t = 0.5 * (unit_direction.y + 1.0);
+        // Vec3 {
+        //     x: (1.0 - t) + t * 0.5,
+        //     y: (1.0 - t) + t * 0.7,
+        //     z: (1.0 - t) + t * 1.0,
+        // }
+
+        Vec3::new()
     }
 }
 
