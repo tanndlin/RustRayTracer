@@ -74,6 +74,10 @@ impl Vec3 {
             z: 1.0 / self.z,
         }
     }
+
+    pub(crate) fn reflect(&self, normal: Vec3) -> Vec3 {
+        self.sub(normal.scale(2.0 * dot(*self, normal)))
+    }
 }
 
 pub fn min(u: Vec3, v: Vec3) -> Vec3 {

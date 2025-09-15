@@ -116,7 +116,7 @@ impl Camera {
 
         if let Some(hit) = hit_result {
             let origin = ray.at(hit.t - 1e-6);
-            let new_dir = hit.normal;
+            let new_dir = ray.dir.reflect(hit.normal);
             let new_ray = Ray::new(origin, new_dir);
             return self
                 .ray_color(&new_ray, objects, depth + 1)
