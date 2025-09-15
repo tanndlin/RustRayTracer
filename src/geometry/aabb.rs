@@ -7,6 +7,8 @@ use crate::{
     util::{hit_result::HitResult, ray::Ray},
 };
 
+const MIN_CHILDREN: usize = 10;
+
 pub enum AABBType<T> {
     Recursive(RecursiveAABB<T>),
     Leaf(Vec<T>),
@@ -23,7 +25,7 @@ impl<T: Hittable> AABB<T> {
         let bounds = Self::calc_bounds(&mesh.children);
 
         let num_children = mesh.children.len();
-        if num_children < 10 {
+        if num_children <= MIN_CHILDREN {
             return AABB {
                 aabb_type: AABBType::Leaf(mesh.children),
                 bounds,
