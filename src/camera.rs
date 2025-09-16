@@ -30,32 +30,16 @@ impl Camera {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
         let materials = vec![
             Lambertian {
-                albedo: Color {
-                    x: 0.8,
-                    y: 0.3,
-                    z: 0.3,
-                },
+                albedo: Color::new(0.8, 0.3, 0.3),
             },
             Lambertian {
-                albedo: Color {
-                    x: 0.8,
-                    y: 0.8,
-                    z: 0.0,
-                },
+                albedo: Color::new(0.8, 0.8, 0.0),
             },
             Lambertian {
-                albedo: Color {
-                    x: 0.8,
-                    y: 0.6,
-                    z: 0.2,
-                },
+                albedo: Color::new(0.8, 0.6, 0.2),
             },
             Lambertian {
-                albedo: Color {
-                    x: 0.1,
-                    y: 0.2,
-                    z: 0.5,
-                },
+                albedo: Color::new(0.1, 0.2, 0.5),
             },
         ];
 
@@ -63,21 +47,9 @@ impl Camera {
             image_width,
             image_height,
             fov: 65,
-            look_from: Vec3 {
-                x: -3.0,
-                y: 0.5,
-                z: -2.0,
-            },
-            look_at: Vec3 {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-            },
-            up: Vec3 {
-                x: 0.0,
-                y: 1.0,
-                z: 0.0,
-            },
+            look_from: Vec3::new(-3.0, 0.5, -2.0),
+            look_at: Vec3::new(0.0, 0.0, 0.0),
+            up: Vec3::new(0.0, 1.0, 0.0),
             materials,
         }
     }
