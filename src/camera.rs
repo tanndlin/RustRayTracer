@@ -118,7 +118,7 @@ impl Camera {
 
     fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Color {
         if depth >= MAX_BOUNCES as u8 {
-            return Color::new(0.0, 0.0, 0.0);
+            return Color::new(1.0, 1.0, 1.0);
         }
 
         let mut hit_result: Option<HitResult> = None;
