@@ -6,7 +6,11 @@ pub struct Vec3 {
 }
 
 impl Vec3 {
-    pub fn new() -> Self {
+    pub fn new(x: f64, y: f64, z: f64) -> Self {
+        Self { x, y, z }
+    }
+
+    pub fn zero() -> Self {
         Self {
             x: 0.0,
             y: 0.0,
@@ -111,3 +115,5 @@ pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
         z: u.x * v.y - u.y * v.x,
     }
 }
+
+pub type Color = Vec3;

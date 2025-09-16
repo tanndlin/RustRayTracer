@@ -37,7 +37,7 @@ pub fn parse_obj(_path: &str) -> Vec<Tri> {
                     continue;
                 }
 
-                let mut v = [Vec3::new(); 3];
+                let mut v = [Vec3::zero(); 3];
                 let mut n = [None, None, None];
 
                 for i in 0..3 {

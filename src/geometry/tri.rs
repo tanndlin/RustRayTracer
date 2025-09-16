@@ -2,6 +2,7 @@ use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{
         hit_result::HitResult,
+        interval::Interval,
         ray::Ray,
         vec3::{Vec3, cross, dot, max, min},
     },
@@ -53,7 +54,7 @@ impl Tri {
 }
 
 impl Hittable for Tri {
-    fn hit(&self, r: &Ray) -> Option<HitResult> {
+    fn hit(&self, r: &Ray, interval: &Interval) -> Option<HitResult> {
         let ao = r.origin.sub(self.v0);
         let dao = cross(ao, r.dir);
 
@@ -67,7 +68,7 @@ impl Hittable for Tri {
 
         // Calculate dst to triangle
         let dst = dot(ao, self.face_normal) * inv_det;
-        if dst < 0.0 {
+        if dst < 0.0 || !interval.contains(dst) {
             return None;
         }
 
@@ -80,10 +81,6 @@ impl Hittable for Tri {
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
-
-        // if !ray_t.contains(dst){
-        //     return false;
-        // }
 
         let interpolated_normal =
             if let (Some(n0), Some(n1), Some(n2)) = (self.n0, self.n1, self.n2) {
@@ -108,8 +105,16 @@ impl Hittable for Tri {
     }
 
     fn get_bounds(&self) -> Bounds {
-        let min = min(self.v0, min(self.v1, self.v2));
-        let max = max(self.v0, max(self.v1, self.v2));
+        let min = min(self.v0, min(self.v1, self.v2)).sub(Vec3 {
+            x: 1e-6,
+            y: 1e-6,
+            z: 1e-6,
+        });
+        let max = max(self.v0, max(self.v1, self.v2)).add(Vec3 {
+            x: 1e-6,
+            y: 1e-6,
+            z: 1e-6,
+        });
 
         Bounds { min, max }
     }

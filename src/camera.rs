@@ -2,14 +2,16 @@ use rayon::prelude::*;
 use std::f64::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
+const USE_MULTITHREADING: bool = true;
 
 use crate::{
     geometry::hittable::Hittable,
     material::{lambertian::Lambertian, material_trait::Material},
     util::{
         hit_result::HitResult,
+        interval::Interval,
         ray::Ray,
-        vec3::{Vec3, cross},
+        vec3::{Color, Vec3, cross},
     },
 };
 
@@ -20,7 +22,7 @@ pub struct Camera {
     look_from: Vec3,
     look_at: Vec3,
     up: Vec3,
-    pub materials: Vec<Lambertian>,
+    materials: Vec<Lambertian>,
 }
 
 impl Camera {
@@ -28,28 +30,28 @@ impl Camera {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
         let materials = vec![
             Lambertian {
-                albedo: Vec3 {
+                albedo: Color {
                     x: 0.8,
                     y: 0.3,
                     z: 0.3,
                 },
             },
             Lambertian {
-                albedo: Vec3 {
+                albedo: Color {
                     x: 0.8,
                     y: 0.8,
                     z: 0.0,
                 },
             },
             Lambertian {
-                albedo: Vec3 {
+                albedo: Color {
                     x: 0.8,
                     y: 0.6,
                     z: 0.2,
                 },
             },
             Lambertian {
-                albedo: Vec3 {
+                albedo: Color {
                     x: 0.1,
                     y: 0.2,
                     z: 0.5,
@@ -80,7 +82,7 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Vec3> {
+    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Color> {
         // Determine viewport dimensions.
         let theta = degrees_to_radians(self.fov);
         let h = f64::tan(theta / 2.0);
@@ -111,35 +113,53 @@ impl Camera {
             .add(pixel_delta_u.scale(0.5))
             .add(pixel_delta_v.scale(0.5));
 
-        let frame_buffer: Vec<Vec3> = (0..self.image_height)
-            .into_par_iter()
-            .flat_map_iter(|y| {
-                (0..self.image_width).map(move |x| {
-                    let pixel_loc = pixel00_loc
-                        .add(pixel_delta_u.scale(x as f64))
-                        .add(pixel_delta_v.scale(y as f64));
-                    let dir = pixel_loc.sub(self.look_from).normalize();
-                    let ray = Ray::new(self.look_from, dir);
+        match USE_MULTITHREADING {
+            true => (0..self.image_height)
+                .into_par_iter()
+                .flat_map_iter(|y| {
+                    (0..self.image_width).map(move |x| {
+                        let pixel_loc = pixel00_loc
+                            .add(pixel_delta_u.scale(x as f64))
+                            .add(pixel_delta_v.scale(y as f64));
+                        let dir = pixel_loc.sub(self.look_from).normalize();
+                        let ray = Ray::new(self.look_from, dir);
 
-                    self.ray_color(&ray, objects, 0)
+                        self.ray_color(&ray, objects, 0)
+                    })
                 })
-            })
-            .collect();
+                .collect(),
+            false => (0..self.image_height)
+                .flat_map(|y| {
+                    (0..self.image_width).map(move |x| {
+                        let pixel_loc = pixel00_loc
+                            .add(pixel_delta_u.scale(x as f64))
+                            .add(pixel_delta_v.scale(y as f64));
+                        let dir = pixel_loc.sub(self.look_from).normalize();
+                        let ray = Ray::new(self.look_from, dir);
 
-        frame_buffer
+                        self.ray_color(&ray, objects, 0)
+                    })
+                })
+                .collect(),
+        }
     }
 
-    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Vec3 {
+    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Color {
         if depth >= MAX_BOUNCES as u8 {
-            return Vec3::new();
+            return Color::new(0.0, 0.0, 0.0);
         }
 
         let mut hit_result: Option<HitResult> = None;
+        let mut interval = Interval {
+            min: 0.001,
+            max: f64::INFINITY,
+        };
 
         for object in objects {
-            if let Some(hit) = object.hit(ray)
+            if let Some(hit) = object.hit(ray, &interval)
                 && (hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t)
             {
+                interval.max = hit.t;
                 hit_result = Some(hit);
             }
         }
@@ -154,11 +174,7 @@ impl Camera {
         // Background gradient
         let unit_direction = ray.dir.normalize();
         let t = 0.5 * (unit_direction.y + 1.0);
-        Vec3 {
-            x: (1.0 - t) + t * 0.5,
-            y: (1.0 - t) + t * 0.7,
-            z: (1.0 - t) + t * 1.0,
-        }
+        Color::new(1.0 - t, 1.0 - t, 1.0 - t).add(Color::new(0.5, 0.7, 1.0).scale(t))
     }
 }
 

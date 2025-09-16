@@ -1,6 +1,6 @@
 use crate::{
     geometry::{aabb::AABB, bounds::Bounds, hittable::Hittable},
-    util::{hit_result::HitResult, ray::Ray},
+    util::{hit_result::HitResult, interval::Interval, ray::Ray},
 };
 
 pub struct Mesh<T: Hittable> {
@@ -15,8 +15,8 @@ impl<T: Hittable> Mesh<T> {
 }
 
 impl<T: Hittable> Hittable for Mesh<T> {
-    fn hit(&self, ray: &Ray) -> Option<HitResult> {
-        self.aabb.hit(ray)
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
+        self.aabb.hit(ray, interval)
     }
 
     fn get_bounds(&self) -> Bounds {

@@ -1,6 +1,7 @@
-use crate::{
-    util::ray::Ray,
-    util::vec3::{Vec3, max, min},
+use crate::util::{
+    interval::Interval,
+    ray::Ray,
+    vec3::{Vec3, max, min},
 };
 
 pub enum Axis {
@@ -32,27 +33,47 @@ impl Bounds {
         }
     }
 
-    pub fn hit(&self, ray: &Ray) -> Option<f64> {
-        // Slab method
-        let t0s = self.min.sub(ray.origin).mul(ray.inv_dir);
-        let t1s = self.max.sub(ray.origin).mul(ray.inv_dir);
+    pub fn hit(&self, ray: &Ray, interval: &Interval) -> Option<Interval> {
+        let mut t_min = interval.min;
+        let mut t_max = interval.max;
 
-        let tsmalls = Vec3 {
-            x: t0s.x.min(t1s.x),
-            y: t0s.y.min(t1s.y),
-            z: t0s.z.min(t1s.z),
-        };
-        let tbigs = Vec3 {
-            x: t0s.x.max(t1s.x),
-            y: t0s.y.max(t1s.y),
-            z: t0s.z.max(t1s.z),
-        };
+        // X slab
+        let mut t0 = (self.min.x - ray.origin.x) * ray.inv_dir.x;
+        let mut t1 = (self.max.x - ray.origin.x) * ray.inv_dir.x;
+        if ray.inv_dir.x < 0.0 {
+            std::mem::swap(&mut t0, &mut t1);
+        }
+        t_min = t_min.max(t0);
+        t_max = t_max.min(t1);
+        if t_max <= t_min {
+            return None;
+        }
 
-        let tmin = tsmalls.x.max(tsmalls.y).max(tsmalls.z);
-        let tmax = tbigs.x.min(tbigs.y).min(tbigs.z);
+        // Y slab
+        let mut t0 = (self.min.y - ray.origin.y) * ray.inv_dir.y;
+        let mut t1 = (self.max.y - ray.origin.y) * ray.inv_dir.y;
+        if ray.inv_dir.y < 0.0 {
+            std::mem::swap(&mut t0, &mut t1);
+        }
+        t_min = t_min.max(t0);
+        t_max = t_max.min(t1);
+        if t_max <= t_min {
+            return None;
+        }
 
-        if tmax >= tmin.max(0.0) && tmax > 0.0 {
-            Some(tmin)
+        // Z slab
+        let mut t0 = (self.min.z - ray.origin.z) * ray.inv_dir.z;
+        let mut t1 = (self.max.z - ray.origin.z) * ray.inv_dir.z;
+        if ray.inv_dir.z < 0.0 {
+            std::mem::swap(&mut t0, &mut t1);
+        }
+        t_min = t_min.max(t0);
+        t_max = t_max.min(t1);
+        if t_max > t_min {
+            Some(Interval {
+                min: t_min,
+                max: t_max,
+            })
         } else {
             None
         }

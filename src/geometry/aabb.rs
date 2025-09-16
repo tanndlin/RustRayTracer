@@ -3,7 +3,7 @@ use crate::{
         bounds::{Axis, Bounds},
         hittable::Hittable,
     },
-    util::{hit_result::HitResult, ray::Ray},
+    util::{hit_result::HitResult, interval::Interval, ray::Ray},
 };
 
 const MIN_CHILDREN: usize = 10;
@@ -73,18 +73,29 @@ impl<T: Hittable> AABB<T> {
 }
 
 impl<T: Hittable> Hittable for AABB<T> {
-    fn hit(&self, ray: &Ray) -> Option<HitResult> {
-        self.bounds.hit(ray)?;
-
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
+        self.bounds.hit(ray, interval)?;
         match &self.aabb_type {
-            AABBType::Recursive(c) => c.hit(ray),
+            AABBType::Recursive(c) => c.hit(ray, interval),
             AABBType::Leaf(children) => {
+                let mut best_hit: Option<HitResult> = None;
+                let mut t_max = interval.max;
+
                 for child in children {
-                    if let Some(hit) = child.hit(ray) {
-                        return Some(hit);
+                    if let Some(hit) = child.hit(
+                        ray,
+                        &Interval {
+                            min: interval.min,
+                            max: t_max,
+                        },
+                    ) && (best_hit.is_none() || hit.t < best_hit.as_ref().unwrap().t)
+                    {
+                        best_hit = Some(hit);
+                        t_max = best_hit.as_ref().unwrap().t;
                     }
                 }
-                None
+
+                best_hit
             }
         }
     }
@@ -104,30 +115,38 @@ impl<T: Hittable> RecursiveAABB<T> {
         Self { left, right }
     }
 
-    pub fn hit(&self, ray: &Ray) -> Option<HitResult> {
-        let left_t = self.left.bounds.hit(ray);
-        let right_t = self.right.bounds.hit(ray);
+    pub fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
+        let left_bounds = self.left.bounds.hit(ray, interval);
+        let right_bounds = self.right.bounds.hit(ray, interval);
 
-        match (left_t, right_t) {
-            (Some(_), Some(_)) => {
-                let left_hit = self.left.hit(ray);
-                let right_hit = self.right.hit(ray);
+        match (left_bounds, right_bounds) {
+            (Some(t_left), Some(t_right)) => {
+                // Decide which child is nearer based on entry distance
+                let (first, second, far_bounds) = if t_left.min < t_right.min {
+                    (&self.left, &self.right, t_right)
+                } else {
+                    (&self.right, &self.left, t_left)
+                };
 
-                match (left_hit, right_hit) {
-                    (Some(lh), Some(rh)) => {
-                        if lh.t < rh.t {
-                            Some(lh)
-                        } else {
-                            Some(rh)
-                        }
+                // Traverse near child
+                if let Some(hit) = first.hit(ray, interval) {
+                    // Early out: if the hit is before far box's entry, skip far child
+                    if hit.t < far_bounds.min {
+                        return Some(hit);
                     }
-                    (Some(lh), None) => Some(lh),
-                    (None, Some(rh)) => Some(rh),
-                    (None, None) => None,
+                    // Otherwise, check far child too (with reduced interval)
+                    if let Some(hit2) = second.hit(ray, &Interval::new(interval.min, hit.t)) {
+                        return Some(if hit.t < hit2.t { hit } else { hit2 });
+                    }
+                    return Some(hit);
                 }
+
+                // No hit in near → must try far
+                second.hit(ray, interval)
             }
-            (Some(_), None) => self.left.hit(ray),
-            (None, Some(_)) => self.right.hit(ray),
+
+            (Some(_), None) => self.left.hit(ray, interval),
+            (None, Some(_)) => self.right.hit(ray, interval),
             (None, None) => None,
         }
     }

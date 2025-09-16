@@ -2,6 +2,7 @@ use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{
         hit_result::HitResult,
+        interval::Interval,
         ray::Ray,
         vec3::{Vec3, dot},
     },
@@ -14,7 +15,7 @@ pub struct Sphere {
 }
 
 impl Hittable for Sphere {
-    fn hit(&self, ray: &Ray) -> Option<HitResult> {
+    fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         let oc = self.center.sub(ray.origin);
         let a = ray.dir.length_squared();
         let h = dot(ray.dir, oc);
@@ -29,7 +30,7 @@ impl Hittable for Sphere {
         let t1 = (h - sqrt_d) / a;
         let t2 = (h + sqrt_d) / a;
         let t = if t1 >= 0.0 { t1 } else { t2 };
-        if t < 1e-6 {
+        if t < 1e-6 || !interval.contains(t) {
             return None;
         }
 
