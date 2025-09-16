@@ -3,25 +3,15 @@
         {
             "splitTerminals": [
                 {
-                    "name": "Git",
-                    "commands": [
-                        "git status",
-                    ]
-                }
-            ]
-        },
-        {
-            "splitTerminals": [
-                {
                     "name": "Run",
                     "commands": [
                         "nodemon -e rs,tan -x \"cargo run\""
                     ]
                 },
                 {
-                    "name": "ASM",
+                    "name": "Git",
                     "commands": [
-                        "nodemon -e asm -x \"just asm\""
+                        "git status",
                     ]
                 }
             ],
