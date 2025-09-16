@@ -1,3 +1,5 @@
+use std::ops;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f64,
@@ -18,14 +20,6 @@ impl Vec3 {
         }
     }
 
-    pub fn sub(&self, other: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x - other.x,
-            y: self.y - other.y,
-            z: self.z - other.z,
-        }
-    }
-
     pub fn length_squared(&self) -> f64 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
@@ -39,38 +33,6 @@ impl Vec3 {
         }
     }
 
-    pub fn scale(&self, factor: f64) -> Vec3 {
-        Vec3 {
-            x: self.x * factor,
-            y: self.y * factor,
-            z: self.z * factor,
-        }
-    }
-
-    pub fn negate(&self) -> Vec3 {
-        Vec3 {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-        }
-    }
-
-    pub fn add(&self, scale: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x + scale.x,
-            y: self.y + scale.y,
-            z: self.z + scale.z,
-        }
-    }
-
-    pub fn mul(&self, other: Vec3) -> Vec3 {
-        Vec3 {
-            x: self.x * other.x,
-            y: self.y * other.y,
-            z: self.z * other.z,
-        }
-    }
-
     pub fn invert(&self) -> Vec3 {
         Vec3 {
             x: 1.0 / self.x,
@@ -80,11 +42,83 @@ impl Vec3 {
     }
 
     pub fn reflect(&self, normal: Vec3) -> Vec3 {
-        self.sub(normal.scale(2.0 * dot(*self, normal)))
+        *self - normal * 2.0 * dot(*self, normal)
     }
 
     pub fn is_finite(&self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
+    }
+}
+
+impl ops::Add for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
+impl ops::Sub for Vec3 {
+    type Output = Vec3;
+
+    fn sub(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
+        }
+    }
+}
+
+impl ops::Mul for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, other: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x * other.x,
+            y: self.y * other.y,
+            z: self.z * other.z,
+        }
+    }
+}
+
+impl ops::Mul<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn mul(self, factor: f64) -> Vec3 {
+        Vec3 {
+            x: self.x * factor,
+            y: self.y * factor,
+            z: self.z * factor,
+        }
+    }
+}
+
+impl ops::Neg for Vec3 {
+    type Output = Vec3;
+
+    fn neg(self) -> Vec3 {
+        Vec3 {
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+        }
+    }
+}
+
+impl ops::Div<f64> for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, divisor: f64) -> Vec3 {
+        Vec3 {
+            x: self.x / divisor,
+            y: self.y / divisor,
+            z: self.z / divisor,
+        }
     }
 }
 

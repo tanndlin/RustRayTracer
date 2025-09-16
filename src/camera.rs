@@ -59,41 +59,36 @@ impl Camera {
         let theta = degrees_to_radians(self.fov);
         let h = f64::tan(theta / 2.0);
         let viewport_height = 2.0 * h;
-        let viewport_width = viewport_height * (self.image_width as f64 / self.image_height as f64);
+        let viewport_width = viewport_height * self.image_width as f64 / self.image_height as f64;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        let w = self.look_from.sub(self.look_at).normalize();
+        let w = (self.look_from - self.look_at).normalize();
         let u = cross(self.up, w).normalize();
         let v = cross(w, u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
-        let viewport_u = u.scale(viewport_width); // Vector across viewport horizontal edge
-        let viewport_v = v.negate().scale(viewport_height); // Vector down viewport vertical edge
+        let viewport_u = u * viewport_width; // Vector across viewport horizontal edge
+        let viewport_v = -v * viewport_height; // Vector down viewport vertical edge
 
         // Calculate the horizontal and vertical delta vectors to the next pixel.
-        let pixel_delta_u = viewport_u.scale(1.0 / self.image_width as f64);
-        let pixel_delta_v = viewport_v.scale(1.0 / self.image_height as f64);
+        let pixel_delta_u = viewport_u * 1.0 / self.image_width as f64;
+        let pixel_delta_v = viewport_v * 1.0 / self.image_height as f64;
 
         // Calculate the location of the upper left pixel.
-        let viewport_upper_left = self
-            .look_from
-            .sub(w)
-            .sub(viewport_u.scale(0.5))
-            .sub(viewport_v.scale(0.5));
+        let viewport_upper_left = self.look_from - w - viewport_u * 0.5 - viewport_v * 0.5;
 
-        let pixel00_loc = viewport_upper_left
-            .add(pixel_delta_u.scale(0.5))
-            .add(pixel_delta_v.scale(0.5));
+        dbg!(&viewport_upper_left);
+
+        let pixel00_loc = viewport_upper_left + pixel_delta_u * 0.5 + pixel_delta_v * 0.5;
 
         match USE_MULTITHREADING {
             true => (0..self.image_height)
                 .into_par_iter()
                 .flat_map_iter(|y| {
                     (0..self.image_width).map(move |x| {
-                        let pixel_loc = pixel00_loc
-                            .add(pixel_delta_u.scale(x as f64))
-                            .add(pixel_delta_v.scale(y as f64));
-                        let dir = pixel_loc.sub(self.look_from).normalize();
+                        let pixel_loc =
+                            pixel00_loc + pixel_delta_u * (x as f64) + pixel_delta_v * (y as f64);
+                        let dir = (pixel_loc - self.look_from).normalize();
                         let ray = Ray::new(self.look_from, dir);
 
                         self.ray_color(&ray, objects, 0)
@@ -103,10 +98,9 @@ impl Camera {
             false => (0..self.image_height)
                 .flat_map(|y| {
                     (0..self.image_width).map(move |x| {
-                        let pixel_loc = pixel00_loc
-                            .add(pixel_delta_u.scale(x as f64))
-                            .add(pixel_delta_v.scale(y as f64));
-                        let dir = pixel_loc.sub(self.look_from).normalize();
+                        let pixel_loc =
+                            pixel00_loc + pixel_delta_u * (x as f64) + pixel_delta_v * (y as f64);
+                        let dir = (pixel_loc - self.look_from).normalize();
                         let ray = Ray::new(self.look_from, dir);
 
                         self.ray_color(&ray, objects, 0)
@@ -140,13 +134,13 @@ impl Camera {
             let material = &self.materials[hit.material_index];
             let (scattered_ray, attenuation) = material.scatter(ray, &hit);
 
-            return attenuation.mul(self.ray_color(&scattered_ray, objects, depth + 1));
+            return attenuation * self.ray_color(&scattered_ray, objects, depth + 1);
         }
 
         // Background gradient
         let unit_direction = ray.dir.normalize();
         let t = 0.5 * (unit_direction.y + 1.0);
-        Color::new(1.0 - t, 1.0 - t, 1.0 - t).add(Color::new(0.5, 0.7, 1.0).scale(t))
+        Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t
     }
 }
 

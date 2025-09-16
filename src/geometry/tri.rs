@@ -34,8 +34,8 @@ impl Tri {
         n1: Option<Vec3>,
         n2: Option<Vec3>,
     ) -> Self {
-        let edge_ab = v1.sub(v0);
-        let edge_ac = v2.sub(v0);
+        let edge_ab = v1 - v0;
+        let edge_ac = v2 - v0;
         let face_normal = cross(edge_ab, edge_ac);
 
         Tri {
@@ -55,7 +55,7 @@ impl Tri {
 
 impl Hittable for Tri {
     fn hit(&self, r: &Ray, interval: &Interval) -> Option<HitResult> {
-        let ao = r.origin.sub(self.v0);
+        let ao = r.origin - self.v0;
         let dao = cross(ao, r.dir);
 
         // Backface culling
@@ -85,7 +85,8 @@ impl Hittable for Tri {
         let interpolated_normal =
             if let (Some(n0), Some(n1), Some(n2)) = (self.n0, self.n1, self.n2) {
                 let w = 1.0 - u - v;
-                n0.scale(w).add(n1.scale(u)).add(n2.scale(v)).normalize()
+                let normal = n0 * w + n1 * u + n2 * v;
+                normal.normalize()
             } else {
                 self.face_normal.normalize()
             };
@@ -105,16 +106,18 @@ impl Hittable for Tri {
     }
 
     fn get_bounds(&self) -> Bounds {
-        let min = min(self.v0, min(self.v1, self.v2)).sub(Vec3 {
-            x: 1e-6,
-            y: 1e-6,
-            z: 1e-6,
-        });
-        let max = max(self.v0, max(self.v1, self.v2)).add(Vec3 {
-            x: 1e-6,
-            y: 1e-6,
-            z: 1e-6,
-        });
+        let min = min(self.v0, min(self.v1, self.v2))
+            - Vec3 {
+                x: 1e-6,
+                y: 1e-6,
+                z: 1e-6,
+            };
+        let max = max(self.v0, max(self.v1, self.v2))
+            + Vec3 {
+                x: 1e-6,
+                y: 1e-6,
+                z: 1e-6,
+            };
 
         Bounds { min, max }
     }

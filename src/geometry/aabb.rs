@@ -37,8 +37,8 @@ impl<T: Hittable> AABB<T> {
         sorted_tris.sort_by(|a, b| {
             let a_bounds = a.get_bounds();
             let b_bounds = b.get_bounds();
-            let a_center = a_bounds.min.add(a_bounds.max).scale(0.5);
-            let b_center = b_bounds.min.add(b_bounds.max).scale(0.5);
+            let a_center = a_bounds.min + a_bounds.max * 0.5;
+            let b_center = b_bounds.min + b_bounds.max * 0.5;
 
             match longest_axis {
                 Axis::X => a_center.x.partial_cmp(&b_center.x).unwrap(),

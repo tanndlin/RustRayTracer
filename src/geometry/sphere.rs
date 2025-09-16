@@ -16,7 +16,7 @@ pub struct Sphere {
 
 impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
-        let oc = self.center.sub(ray.origin);
+        let oc = self.center - ray.origin;
         let a = ray.dir.length_squared();
         let h = dot(ray.dir, oc);
         let c = oc.length_squared() - self.radius * self.radius;
@@ -35,7 +35,7 @@ impl Hittable for Sphere {
         }
 
         let point = ray.at(t);
-        let normal = point.sub(self.center).scale(1.0 / self.radius);
+        let normal = (point - self.center) / self.radius;
         Some(HitResult {
             normal,
             t,
@@ -52,8 +52,8 @@ impl Hittable for Sphere {
         };
 
         Bounds {
-            min: self.center.sub(r_vec),
-            max: self.center.add(r_vec),
+            min: self.center - r_vec,
+            max: self.center + r_vec,
         }
     }
 }

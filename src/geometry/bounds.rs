@@ -23,7 +23,7 @@ impl Bounds {
     }
 
     pub fn longest_axis(&self) -> Axis {
-        let diag = self.max.sub(self.min);
+        let diag = self.max - self.min;
         if diag.x > diag.y && diag.x > diag.z {
             Axis::X
         } else if diag.y > diag.z {

@@ -17,6 +17,6 @@ impl Ray {
 
     // Projects ray to a certain distance
     pub fn at(&self, dst: f64) -> Vec3 {
-        self.origin.add(self.dir.scale(dst))
+        self.origin + self.dir * dst
     }
 }
