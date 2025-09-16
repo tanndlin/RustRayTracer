@@ -60,14 +60,14 @@ impl Camera {
         Camera {
             image_width,
             image_height,
-            fov: 90,
+            fov: 65,
             look_from: Vec3 {
                 x: -3.0,
                 y: 0.5,
                 z: -2.0,
             },
             look_at: Vec3 {
-                x: 1.0,
+                x: 0.0,
                 y: 0.0,
                 z: 0.0,
             },

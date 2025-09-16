@@ -31,15 +31,22 @@ fn main() {
     let duration = start.elapsed();
     println!("Render time: {:?}", duration);
 
-    let file = "output.ppm";
-    println!("Writing to {}", file);
-
-    let mut ppm = format!("P3\n{} {}\n255\n", camera.image_width, camera.image_height);
-    for pixel in framebuffer {
-        let ir = (255.999 * pixel.x) as i32;
-        let ig = (255.999 * pixel.y) as i32;
-        let ib = (255.999 * pixel.z) as i32;
-        ppm.push_str(&format!("{} {} {}\n", ir, ig, ib));
-    }
-    std::fs::write(file, ppm).expect("Unable to write file");
+    let file = "output.png";
+    image::save_buffer(
+        file,
+        &framebuffer
+            .iter()
+            .flat_map(|c| {
+                let ir = (255.999 * c.x.clamp(0.0, 0.999)) as u8;
+                let ig = (255.999 * c.y.clamp(0.0, 0.999)) as u8;
+                let ib = (255.999 * c.z.clamp(0.0, 0.999)) as u8;
+                [ir, ig, ib]
+            })
+            .collect::<Vec<u8>>(),
+        camera.image_width,
+        camera.image_height,
+        image::ColorType::Rgb8,
+    )
+    .unwrap();
+    println!("Saved to {}", file);
 }
