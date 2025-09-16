@@ -1,5 +1,5 @@
 use crate::camera::Camera;
-use crate::geometry::{aabb::AABB, hittable::Hittable, mesh::Mesh, sphere::Sphere};
+use crate::geometry::{hittable::Hittable, mesh::Mesh, sphere::Sphere};
 use crate::util::vec3::Vec3;
 
 mod camera;
@@ -22,9 +22,8 @@ fn main() {
 
     let tris = obj_parser::parse_obj("src/Chess.obj");
     let mesh = Mesh::new(tris);
-    let aabb = AABB::new(mesh);
 
-    let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(aabb)];
+    let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(mesh)];
     println!("Rendering...");
 
     let start = std::time::Instant::now();

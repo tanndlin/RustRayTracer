@@ -2,7 +2,6 @@ use crate::{
     geometry::{
         bounds::{Axis, Bounds},
         hittable::Hittable,
-        mesh::Mesh,
     },
     util::{hit_result::HitResult, ray::Ray},
 };
@@ -21,20 +20,20 @@ pub struct AABB<T> {
 }
 
 impl<T: Hittable> AABB<T> {
-    pub fn new(mesh: Mesh<T>) -> Self {
-        let bounds = Self::calc_bounds(&mesh.children);
+    pub fn new(children: Vec<T>) -> Self {
+        let bounds = Self::calc_bounds(&children);
 
-        let num_children = mesh.children.len();
+        let num_children = children.len();
         if num_children <= MIN_CHILDREN {
             return AABB {
-                aabb_type: AABBType::Leaf(mesh.children),
+                aabb_type: AABBType::Leaf(children),
                 bounds,
             };
         }
 
         let longest_axis = bounds.longest_axis();
 
-        let mut sorted_tris = mesh.children;
+        let mut sorted_tris = children;
         sorted_tris.sort_by(|a, b| {
             let a_bounds = a.get_bounds();
             let b_bounds = b.get_bounds();
@@ -52,8 +51,8 @@ impl<T: Hittable> AABB<T> {
         let left_tris = sorted_tris.split_off(mid);
         let right_tris = sorted_tris;
 
-        let left_aabb = AABB::new(Mesh::new(left_tris));
-        let right_aabb = AABB::new(Mesh::new(right_tris));
+        let left_aabb = AABB::new(left_tris);
+        let right_aabb = AABB::new(right_tris);
         AABB {
             aabb_type: AABBType::Recursive(RecursiveAABB::new(
                 Box::new(left_aabb),
