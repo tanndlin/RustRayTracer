@@ -77,8 +77,6 @@ impl Camera {
         // Calculate the location of the upper left pixel.
         let viewport_upper_left = self.look_from - w - viewport_u * 0.5 - viewport_v * 0.5;
 
-        dbg!(&viewport_upper_left);
-
         let pixel00_loc = viewport_upper_left + pixel_delta_u * 0.5 + pixel_delta_v * 0.5;
 
         match USE_MULTITHREADING {
