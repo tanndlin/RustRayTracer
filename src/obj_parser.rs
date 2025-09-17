@@ -11,10 +11,12 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
     let mut vertices: Vec<Vec3> = vec![];
     let mut v_normals: Vec<Vec3> = vec![];
+    let mut v_textures: Vec<Vec3> = vec![];
     let mut tris: Vec<Tri> = vec![];
     let mut materials = vec![Box::new(Lambertian {
         name: "default".to_string(),
         albedo: Vec3::new(1.0, 0.0, 1.0),
+        roughness: 1.0,
     }) as Box<dyn Material>];
 
     let mut current_material_index = 0;
@@ -64,6 +66,15 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                 let z: f64 = parts[3].parse().unwrap_or(0.0);
                 v_normals.push(Vec3 { x, y, z }.normalize());
             }
+            "vt" => {
+                // Texture coordinate
+                if parts.len() < 3 {
+                    continue;
+                }
+                let u: f64 = parts[1].parse().unwrap_or(0.0);
+                let v: f64 = parts[2].parse().unwrap_or(0.0);
+                v_textures.push(Vec3 { x: u, y: v, z: 0.0 });
+            }
             "f" => {
                 if parts.len() != 4 {
                     dbg!("Skipping non-triangular face: {}", line);
@@ -72,6 +83,7 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
 
                 let mut v = [Vec3::zero(); 3];
                 let mut n = [None, None, None];
+                let mut vt = [None, None, None];
 
                 for i in 0..3 {
                     let indices: Vec<&str> = parts[i + 1].split('/').collect();
@@ -89,6 +101,13 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                     {
                         n[i] = Some(v_normals[vn_idx - 1]);
                     }
+
+                    // Vertex texture coordinate
+                    if let Some(vt_str) = indices.get(1)
+                        && let Ok(vt_idx) = vt_str.parse::<usize>()
+                    {
+                        vt[i] = Some(v_textures[vt_idx - 1]);
+                    }
                 }
 
                 tris.push(Tri::new(
@@ -98,6 +117,9 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                     n[0],
                     n[1],
                     n[2],
+                    vt[0],
+                    vt[1],
+                    vt[2],
                     current_material_index,
                 ));
             }
@@ -138,6 +160,7 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     materials.push(Box::new(Lambertian {
                         name,
                         albedo: Vec3 { x: r, y: g, z: b },
+                        roughness: 0.0,
                     }) as Box<dyn Material>);
                 }
             }
@@ -163,8 +186,11 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     .collect();
 
                 if let Some(name) = cur_material_name.take() {
-                    materials
-                        .push(Box::new(TextureLambertian { name, pixels }) as Box<dyn Material>);
+                    materials.push(Box::new(TextureLambertian {
+                        name,
+                        pixels,
+                        roughness: 0.0,
+                    }) as Box<dyn Material>);
                 }
             }
             _ => {}

@@ -48,6 +48,19 @@ impl Vec3 {
     pub fn is_finite(&self) -> bool {
         self.x.is_finite() && self.y.is_finite() && self.z.is_finite()
     }
+
+    pub fn random_in_unit_sphere() -> Self {
+        loop {
+            let p = Vec3::new(
+                rand::random::<f64>() * 2.0 - 1.0,
+                rand::random::<f64>() * 2.0 - 1.0,
+                rand::random::<f64>() * 2.0 - 1.0,
+            );
+            if p.length_squared() < 1.0 {
+                return p;
+            }
+        }
+    }
 }
 
 impl ops::Add for Vec3 {

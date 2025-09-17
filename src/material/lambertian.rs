@@ -1,17 +1,33 @@
 use crate::{
     material::material_trait::Material,
-    util::{hit_result::HitResult, ray::Ray, vec3::Color},
+    util::{
+        hit_result::HitResult,
+        ray::Ray,
+        vec3::{Color, Vec3, dot},
+    },
 };
 
 #[derive(Debug)]
 pub struct Lambertian {
     pub name: String,
     pub albedo: Color,
+    pub roughness: f64,
 }
 
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit: &HitResult) -> (Ray, Color) {
-        let scatter_direction = ray.dir.reflect(hit.normal);
+        let mut scatter_direction = ray.dir.reflect(hit.normal).normalize();
+        // Add some randomness to the scatter direction based on roughness
+        if self.roughness > 0.0 {
+            loop {
+                scatter_direction = (scatter_direction
+                    + Vec3::random_in_unit_sphere() * self.roughness)
+                    .normalize();
+                if dot(scatter_direction, hit.normal) > 0.0 {
+                    break;
+                }
+            }
+        }
 
         let scattered = Ray::new(hit.point, scatter_direction);
         let attenuation = self.albedo;
@@ -28,11 +44,22 @@ impl Material for Lambertian {
 pub struct TextureLambertian {
     pub name: String,
     pub pixels: Vec<Color>,
+    pub roughness: f64,
 }
 
 impl Material for TextureLambertian {
     fn scatter(&self, ray: &Ray, hit: &HitResult) -> (Ray, Color) {
-        let scatter_direction = ray.dir.reflect(hit.normal);
+        let mut scatter_direction = ray.dir.reflect(hit.normal).normalize();
+        if self.roughness > 0.0 {
+            loop {
+                scatter_direction = (scatter_direction
+                    + Vec3::random_in_unit_sphere() * self.roughness)
+                    .normalize();
+                if dot(scatter_direction, hit.normal) > 0.0 {
+                    break;
+                }
+            }
+        }
 
         let u = hit.u;
         let v = hit.v;
