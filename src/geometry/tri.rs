@@ -1,5 +1,6 @@
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
+    material,
     util::{
         hit_result::HitResult,
         interval::Interval,
@@ -33,6 +34,7 @@ impl Tri {
         n0: Option<Vec3>,
         n1: Option<Vec3>,
         n2: Option<Vec3>,
+        material_index: usize,
     ) -> Self {
         let edge_ab = v1 - v0;
         let edge_ac = v2 - v0;
@@ -48,7 +50,7 @@ impl Tri {
             face_normal,
             edge_ab,
             edge_ac,
-            material_index: 0,
+            material_index,
         }
     }
 }
@@ -101,6 +103,8 @@ impl Hittable for Tri {
             normal: n,
             t: dst,
             point,
+            u,
+            v,
             material_index: self.material_index,
         })
     }

@@ -9,7 +9,6 @@ mod obj_parser;
 mod util;
 
 fn main() {
-    let camera = Camera::new(16.0 / 9.0, 1000);
     let sphere = Sphere {
         center: Vec3 {
             x: 5.0,
@@ -20,11 +19,12 @@ fn main() {
         material_index: 0,
     };
 
-    let tris = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
+    let (tris, materials) = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
     let mut mesh = Mesh::new(tris);
     mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
 
     let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(mesh)];
+    let camera = Camera::new(16.0 / 9.0, 1000, materials);
     println!("Rendering...");
 
     let start = std::time::Instant::now();

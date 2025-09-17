@@ -20,7 +20,7 @@ pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
     look_from: Vec3,
-    materials: Vec<Lambertian>,
+    materials: Vec<Box<dyn Material>>,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel00_loc: Vec3,
@@ -28,22 +28,8 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f32, image_width: u32) -> Self {
+    pub fn new(aspect_ratio: f32, image_width: u32, materials: Vec<Box<dyn Material>>) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
-        let materials = vec![
-            Lambertian {
-                albedo: Color::new(0.8, 0.3, 0.3),
-            },
-            Lambertian {
-                albedo: Color::new(0.8, 0.8, 0.0),
-            },
-            Lambertian {
-                albedo: Color::new(0.8, 0.6, 0.2),
-            },
-            Lambertian {
-                albedo: Color::new(0.1, 0.2, 0.5),
-            },
-        ];
 
         let look_from = Vec3::new(-3.0, 0.5, -2.0);
         let look_at = Vec3::new(0.0, 0.0, 0.0);

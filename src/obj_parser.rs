@@ -1,10 +1,23 @@
-use crate::{geometry::tri::Tri, util::vec3::Vec3};
+use crate::{
+    geometry::tri::Tri,
+    material::{
+        lambertian::{Lambertian, TextureLambertian},
+        material_trait::Material,
+    },
+    util::vec3::{Color, Vec3},
+};
 
-pub fn parse_obj(_path: &str) -> Vec<Tri> {
+pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
-    let mut vertices: Vec<Vec3> = Vec::new();
-    let mut v_normals: Vec<Vec3> = Vec::new();
-    let mut tris: Vec<Tri> = Vec::new();
+    let mut vertices: Vec<Vec3> = vec![];
+    let mut v_normals: Vec<Vec3> = vec![];
+    let mut tris: Vec<Tri> = vec![];
+    let mut materials = vec![Box::new(Lambertian {
+        name: "default".to_string(),
+        albedo: Vec3::new(1.0, 0.0, 1.0),
+    }) as Box<dyn Material>];
+
+    let mut current_material_index = 0;
 
     for line in file.lines() {
         let parts: Vec<&str> = line.split_whitespace().collect();
@@ -13,6 +26,26 @@ pub fn parse_obj(_path: &str) -> Vec<Tri> {
         }
 
         match parts[0] {
+            "mtllib" => {
+                let mtl_file = parts.get(1).unwrap_or(&"");
+                let mtl_path = std::path::Path::new(_path)
+                    .parent()
+                    .unwrap_or(std::path::Path::new(""))
+                    .join(mtl_file);
+                materials = parse_mtl(mtl_path.to_str().unwrap_or(""));
+            }
+            "usemtl" => {
+                let mtl_name = parts.get(1).unwrap_or(&"default");
+                if let Some((idx, _)) = materials
+                    .iter()
+                    .enumerate()
+                    .find(|(_, m)| m.get_name() == *mtl_name)
+                {
+                    current_material_index = idx;
+                } else {
+                    current_material_index = 0; // Default material
+                }
+            }
             "v" => {
                 if parts.len() < 4 {
                     continue;
@@ -58,12 +91,85 @@ pub fn parse_obj(_path: &str) -> Vec<Tri> {
                     }
                 }
 
-                tris.push(Tri::new(v[0], v[1], v[2], n[0], n[1], n[2]));
+                tris.push(Tri::new(
+                    v[0],
+                    v[1],
+                    v[2],
+                    n[0],
+                    n[1],
+                    n[2],
+                    current_material_index,
+                ));
             }
 
             _ => {}
         }
     }
 
-    tris
+    (tris, materials)
+}
+
+pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
+    let file = std::fs::read_to_string(path).expect("Failed to read .mtl file");
+
+    let mut materials = vec![];
+
+    let mut cur_material_name = None;
+    for line in file.lines() {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.is_empty() {
+            continue;
+        }
+
+        match parts[0] {
+            "newmtl" => {
+                let name = parts.get(1).unwrap_or(&"default").to_string();
+                cur_material_name = Some(name.clone());
+            }
+            "Kd" => {
+                // Diffuse color
+                if parts.len() < 4 {
+                    continue;
+                }
+                let r: f64 = parts[1].parse().unwrap_or(0.8);
+                let g: f64 = parts[2].parse().unwrap_or(0.8);
+                let b: f64 = parts[3].parse().unwrap_or(0.8);
+                if let Some(name) = cur_material_name.take() {
+                    materials.push(Box::new(Lambertian {
+                        name,
+                        albedo: Vec3 { x: r, y: g, z: b },
+                    }) as Box<dyn Material>);
+                }
+            }
+            "map_Kd" => {
+                let file_name = parts.get(1).expect("Material missing file name");
+                let path = std::path::Path::new(path);
+                let file_name = path
+                    .parent()
+                    .unwrap_or(std::path::Path::new(""))
+                    .join(file_name);
+                println!("Loading texture: {:?}", file_name);
+                let pixels: Vec<Color> = image::open(file_name)
+                    .expect("Failed to open texture file")
+                    .to_rgb8()
+                    .pixels()
+                    .map(|p| {
+                        Color::new(
+                            p[0] as f64 / 255.0,
+                            p[1] as f64 / 255.0,
+                            p[2] as f64 / 255.0,
+                        )
+                    })
+                    .collect();
+
+                if let Some(name) = cur_material_name.take() {
+                    materials
+                        .push(Box::new(TextureLambertian { name, pixels }) as Box<dyn Material>);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    materials
 }

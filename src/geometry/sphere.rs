@@ -36,10 +36,16 @@ impl Hittable for Sphere {
 
         let point = ray.at(t);
         let normal = (point - self.center) / self.radius;
+
+        let u = 0.5 + (normal.z.atan2(normal.x)) / (2.0 * std::f64::consts::PI);
+        let v = 0.5 - (normal.y.asin()) / std::f64::consts::PI;
+
         Some(HitResult {
             normal,
             t,
             point,
+            u,
+            v,
             material_index: self.material_index,
         })
     }
