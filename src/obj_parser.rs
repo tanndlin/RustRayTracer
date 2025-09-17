@@ -110,16 +110,22 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                     }
                 }
 
+                let normals = match n.iter().all(|&norm| norm.is_some()) {
+                    true => Some((n[0].unwrap(), n[1].unwrap(), n[2].unwrap())),
+                    false => None,
+                };
+
+                let uvs = match vt.iter().all(|&tex| tex.is_some()) {
+                    true => Some((vt[0].unwrap(), vt[1].unwrap(), vt[2].unwrap())),
+                    false => None,
+                };
+
                 tris.push(Tri::new(
                     v[0],
                     v[1],
                     v[2],
-                    n[0],
-                    n[1],
-                    n[2],
-                    vt[0],
-                    vt[1],
-                    vt[2],
+                    normals,
+                    uvs,
                     current_material_index,
                 ));
             }

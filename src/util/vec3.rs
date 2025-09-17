@@ -42,7 +42,7 @@ impl Vec3 {
     }
 
     pub fn reflect(&self, normal: Vec3) -> Vec3 {
-        *self - normal * 2.0 * dot(*self, normal)
+        *self - normal * 2.0 * self.dot(normal)
     }
 
     pub fn is_finite(&self) -> bool {
@@ -60,6 +60,10 @@ impl Vec3 {
                 return p;
             }
         }
+    }
+
+    pub fn dot(&self, normal: Vec3) -> f64 {
+        self.x * normal.x + self.y * normal.y + self.z * normal.z
     }
 }
 
@@ -149,10 +153,6 @@ pub fn max(u: Vec3, v: Vec3) -> Vec3 {
         y: u.y.max(v.y),
         z: u.z.max(v.z),
     }
-}
-
-pub fn dot(u: Vec3, v: Vec3) -> f64 {
-    u.x * v.x + u.y * v.y + u.z * v.z
 }
 
 pub fn cross(u: Vec3, v: Vec3) -> Vec3 {

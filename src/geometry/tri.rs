@@ -4,7 +4,7 @@ use crate::{
         hit_result::HitResult,
         interval::Interval,
         ray::Ray,
-        vec3::{Vec3, cross, dot, max, min},
+        vec3::{Vec3, cross, max, min},
     },
 };
 
@@ -14,14 +14,8 @@ pub struct Tri {
     pub v1: Vec3,
     pub v2: Vec3,
 
-    pub n0: Option<Vec3>,
-    pub n1: Option<Vec3>,
-    pub n2: Option<Vec3>,
-
-    pub uv_0: Option<Vec3>,
-    pub uv_1: Option<Vec3>,
-    pub uv_2: Option<Vec3>,
-
+    pub normals: Option<(Vec3, Vec3, Vec3)>,
+    pub uvs: Option<(Vec3, Vec3, Vec3)>,
     face_normal: Vec3,
     edge_ab: Vec3,
     edge_ac: Vec3,
@@ -34,12 +28,8 @@ impl Tri {
         v0: Vec3,
         v1: Vec3,
         v2: Vec3,
-        n0: Option<Vec3>,
-        n1: Option<Vec3>,
-        n2: Option<Vec3>,
-        uv_0: Option<Vec3>,
-        uv_1: Option<Vec3>,
-        uv_2: Option<Vec3>,
+        normals: Option<(Vec3, Vec3, Vec3)>,
+        uvs: Option<(Vec3, Vec3, Vec3)>,
 
         material_index: usize,
     ) -> Self {
@@ -51,12 +41,8 @@ impl Tri {
             v0,
             v1,
             v2,
-            n0,
-            n1,
-            n2,
-            uv_0,
-            uv_1,
-            uv_2,
+            normals,
+            uvs,
             face_normal,
             edge_ab,
             edge_ac,
@@ -71,7 +57,7 @@ impl Hittable for Tri {
         let dao = cross(ao, r.dir);
 
         // Backface culling
-        let determinant = -dot(r.dir, self.face_normal);
+        let determinant = -r.dir.dot(self.face_normal);
         if determinant < 1e-6 {
             return None;
         }
@@ -79,29 +65,29 @@ impl Hittable for Tri {
         let inv_det = 1.0 / determinant;
 
         // Calculate dst to triangle
-        let dst = dot(ao, self.face_normal) * inv_det;
+        let dst = ao.dot(self.face_normal) * inv_det;
         if dst < 0.0 || !interval.contains(dst) {
             return None;
         }
 
-        let u = dot(self.edge_ac, dao) * inv_det;
+        let u = self.edge_ac.dot(dao) * inv_det;
         if !(0.0..=1.0).contains(&u) {
             return None;
         }
 
-        let v = -dot(self.edge_ab, dao) * inv_det;
+        let v = -self.edge_ab.dot(dao) * inv_det;
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
 
-        let interpolated_normal =
-            if let (Some(n0), Some(n1), Some(n2)) = (self.n0, self.n1, self.n2) {
+        let interpolated_normal = match self.normals {
+            Some((n0, n1, n2)) => {
                 let w = 1.0 - u - v;
                 let normal = n0 * w + n1 * u + n2 * v;
                 normal.normalize()
-            } else {
-                self.face_normal.normalize()
-            };
+            }
+            None => self.face_normal.normalize(),
+        };
 
         let mut n = interpolated_normal.normalize();
         if !n.is_finite() || n.length_squared() < 1e-6 {
@@ -109,7 +95,7 @@ impl Hittable for Tri {
         }
 
         let point = r.at(dst);
-        let (u, v) = if let (Some(uv0), Some(uv1), Some(uv2)) = (self.uv_0, self.uv_1, self.uv_2) {
+        let (u, v) = if let Some((uv0, uv1, uv2)) = self.uvs {
             let w = 1.0 - u - v;
             let uv = uv0 * w + uv1 * u + uv2 * v;
             (uv.x, uv.y)

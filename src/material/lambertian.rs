@@ -3,7 +3,7 @@ use crate::{
     util::{
         hit_result::HitResult,
         ray::Ray,
-        vec3::{Color, Vec3, dot},
+        vec3::{Color, Vec3},
     },
 };
 
@@ -23,7 +23,7 @@ impl Material for Lambertian {
                 scatter_direction = (scatter_direction
                     + Vec3::random_in_unit_sphere() * self.roughness)
                     .normalize();
-                if dot(scatter_direction, hit.normal) > 0.0 {
+                if scatter_direction.dot(hit.normal) > 0.0 {
                     break;
                 }
             }
@@ -55,7 +55,7 @@ impl Material for TextureLambertian {
                 scatter_direction = (scatter_direction
                     + Vec3::random_in_unit_sphere() * self.roughness)
                     .normalize();
-                if dot(scatter_direction, hit.normal) > 0.0 {
+                if scatter_direction.dot(hit.normal) > 0.0 {
                     break;
                 }
             }

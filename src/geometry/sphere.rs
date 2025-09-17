@@ -1,11 +1,6 @@
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
-    util::{
-        hit_result::HitResult,
-        interval::Interval,
-        ray::Ray,
-        vec3::{Vec3, dot},
-    },
+    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
 pub struct Sphere {
@@ -18,7 +13,7 @@ impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         let oc = self.center - ray.origin;
         let a = ray.dir.length_squared();
-        let h = dot(ray.dir, oc);
+        let h = ray.dir.dot(oc);
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;
