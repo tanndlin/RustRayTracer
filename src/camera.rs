@@ -2,6 +2,7 @@ use rayon::prelude::*;
 use std::f64::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
+const TILE_SIZE: u32 = 32;
 const USE_MULTITHREADING: bool = true;
 
 use crate::{
@@ -18,11 +19,12 @@ use crate::{
 pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
-    fov: u8,
     look_from: Vec3,
-    look_at: Vec3,
-    up: Vec3,
     materials: Vec<Lambertian>,
+    pixel_delta_u: Vec3,
+    pixel_delta_v: Vec3,
+    pixel00_loc: Vec3,
+    total_pixels: u32,
 }
 
 impl Camera {
@@ -43,69 +45,87 @@ impl Camera {
             },
         ];
 
-        Camera {
-            image_width,
-            image_height,
-            fov: 65,
-            look_from: Vec3::new(-3.0, 0.5, -2.0),
-            look_at: Vec3::new(0.0, 0.0, 0.0),
-            up: Vec3::new(0.0, 1.0, 0.0),
-            materials,
-        }
-    }
+        let look_from = Vec3::new(-3.0, 0.5, -2.0);
+        let look_at = Vec3::new(0.0, 0.0, 0.0);
+        let up = Vec3::new(0.0, 1.0, 0.0);
+        let fov = 65;
 
-    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Color> {
-        // Determine viewport dimensions.
-        let theta = degrees_to_radians(self.fov);
+        let theta = degrees_to_radians(fov);
         let h = f64::tan(theta / 2.0);
         let viewport_height = 2.0 * h;
-        let viewport_width = viewport_height * self.image_width as f64 / self.image_height as f64;
+        let viewport_width = viewport_height * image_width as f64 / image_height as f64;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
-        let w = (self.look_from - self.look_at).normalize();
-        let u = cross(self.up, w).normalize();
+        let w = (look_from - look_at).normalize();
+        let u = cross(up, w).normalize();
         let v = cross(w, u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
         let viewport_u = u * viewport_width; // Vector across viewport horizontal edge
         let viewport_v = -v * viewport_height; // Vector down viewport vertical edge
 
-        // Calculate the horizontal and vertical delta vectors to the next pixel.
-        let pixel_delta_u = viewport_u * 1.0 / self.image_width as f64;
-        let pixel_delta_v = viewport_v * 1.0 / self.image_height as f64;
-
         // Calculate the location of the upper left pixel.
-        let viewport_upper_left = self.look_from - w - viewport_u * 0.5 - viewport_v * 0.5;
+        let viewport_upper_left = look_from - w - viewport_u * 0.5 - viewport_v * 0.5;
 
+        // Calculate the horizontal and vertical delta vectors to the next pixel.
+        let pixel_delta_u = viewport_u * 1.0 / image_width as f64;
+        let pixel_delta_v = viewport_v * 1.0 / image_height as f64;
         let pixel00_loc = viewport_upper_left + pixel_delta_u * 0.5 + pixel_delta_v * 0.5;
 
-        match USE_MULTITHREADING {
-            true => (0..self.image_height)
-                .into_par_iter()
-                .flat_map_iter(|y| {
-                    (0..self.image_width).map(move |x| {
-                        let pixel_loc =
-                            pixel00_loc + pixel_delta_u * (x as f64) + pixel_delta_v * (y as f64);
-                        let dir = (pixel_loc - self.look_from).normalize();
-                        let ray = Ray::new(self.look_from, dir);
+        let total_pixels = image_width * image_height;
 
-                        self.ray_color(&ray, objects, 0)
-                    })
-                })
-                .collect(),
-            false => (0..self.image_height)
-                .flat_map(|y| {
-                    (0..self.image_width).map(move |x| {
-                        let pixel_loc =
-                            pixel00_loc + pixel_delta_u * (x as f64) + pixel_delta_v * (y as f64);
-                        let dir = (pixel_loc - self.look_from).normalize();
-                        let ray = Ray::new(self.look_from, dir);
-
-                        self.ray_color(&ray, objects, 0)
-                    })
-                })
-                .collect(),
+        Camera {
+            image_width,
+            image_height,
+            look_from,
+            materials,
+            pixel00_loc,
+            pixel_delta_u,
+            pixel_delta_v,
+            total_pixels,
         }
+    }
+
+    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Color> {
+        // Determine viewport dimensions.
+        let num_tiles =
+            (self.total_pixels as f32 / TILE_SIZE as f32 / TILE_SIZE as f32).ceil() as u32;
+
+        // Each tile is a square of TILE_SIZE x TILE_SIZE pixels
+        let tiles: Vec<Vec<Vec3>> = match USE_MULTITHREADING {
+            true => (0..num_tiles)
+                .into_par_iter()
+                .map(|tile_index| self.render_tile(tile_index, objects))
+                .collect(),
+            false => (0..num_tiles)
+                .map(|tile_index| self.render_tile(tile_index, objects))
+                .collect(),
+        };
+
+        let mut frame_buffer = vec![];
+        for tile in tiles {
+            for color in tile {
+                frame_buffer.push(color);
+            }
+        }
+        frame_buffer
+    }
+
+    fn render_tile(&self, tile_index: u32, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Vec3> {
+        let mut tile_buffer = vec![];
+        let start_pixel = tile_index * TILE_SIZE * TILE_SIZE;
+        let end_pixel = ((tile_index + 1) * TILE_SIZE * TILE_SIZE).min(self.total_pixels);
+        for pixel_index in start_pixel..end_pixel {
+            let i = pixel_index % self.image_width;
+            let j = pixel_index / self.image_width;
+            let pixel_center =
+                self.pixel00_loc + self.pixel_delta_u * i as f64 + self.pixel_delta_v * j as f64;
+            let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
+
+            let color = self.ray_color(&ray, objects, 0);
+            tile_buffer.push(color);
+        }
+        tile_buffer
     }
 
     fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Color {
