@@ -3,7 +3,7 @@ use crate::{
         bounds::{Axis, Bounds},
         hittable::Hittable,
     },
-    util::{hit_result::HitResult, interval::Interval, ray::Ray},
+    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
 const MIN_CHILDREN: usize = 10;
@@ -102,6 +102,23 @@ impl<T: Hittable> Hittable for AABB<T> {
 
     fn get_bounds(&self) -> Bounds {
         self.bounds
+    }
+
+    fn translate(&mut self, vec: &Vec3) {
+        self.bounds.min = self.bounds.min + *vec;
+        self.bounds.max = self.bounds.max + *vec;
+
+        match &mut self.aabb_type {
+            AABBType::Recursive(c) => {
+                c.left.translate(vec);
+                c.right.translate(vec);
+            }
+            AABBType::Leaf(children) => {
+                for child in children {
+                    child.translate(vec);
+                }
+            }
+        }
     }
 }
 

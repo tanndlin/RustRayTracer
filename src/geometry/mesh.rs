@@ -1,6 +1,6 @@
 use crate::{
     geometry::{aabb::AABB, bounds::Bounds, hittable::Hittable},
-    util::{hit_result::HitResult, interval::Interval, ray::Ray},
+    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
 pub struct Mesh<T: Hittable> {
@@ -21,5 +21,9 @@ impl<T: Hittable> Hittable for Mesh<T> {
 
     fn get_bounds(&self) -> Bounds {
         self.aabb.get_bounds()
+    }
+
+    fn translate(&mut self, vec: &Vec3) {
+        self.aabb.translate(vec);
     }
 }

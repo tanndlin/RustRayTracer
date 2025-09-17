@@ -20,8 +20,9 @@ fn main() {
         material_index: 0,
     };
 
-    let tris = obj_parser::parse_obj("src/Chess.obj");
-    let mesh = Mesh::new(tris);
+    let tris = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
+    let mut mesh = Mesh::new(tris);
+    mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
 
     let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(mesh)];
     println!("Rendering...");

@@ -121,4 +121,10 @@ impl Hittable for Tri {
 
         Bounds { min, max }
     }
+
+    fn translate(&mut self, vec: &Vec3) {
+        self.v0 = self.v0 + *vec;
+        self.v1 = self.v1 + *vec;
+        self.v2 = self.v2 + *vec;
+    }
 }

@@ -56,4 +56,8 @@ impl Hittable for Sphere {
             max: self.center + r_vec,
         }
     }
+
+    fn translate(&mut self, vec: &Vec3) {
+        self.center = self.center + *vec;
+    }
 }

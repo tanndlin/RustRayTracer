@@ -48,7 +48,7 @@ impl Camera {
         let look_from = Vec3::new(-3.0, 0.5, -2.0);
         let look_at = Vec3::new(0.0, 0.0, 0.0);
         let up = Vec3::new(0.0, 1.0, 0.0);
-        let fov = 65;
+        let fov = 55;
 
         let theta = degrees_to_radians(fov);
         let h = f64::tan(theta / 2.0);
