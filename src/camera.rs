@@ -108,43 +108,48 @@ impl Camera {
                 self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
             let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
 
-            let color = self.ray_color(&ray, objects, 0);
+            let color = self.ray_color(&ray, objects);
             tile_buffer.push(color);
         }
         tile_buffer
     }
 
-    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>, depth: u8) -> Color {
-        if depth >= MAX_BOUNCES as u8 {
-            return Color::new(1.0, 1.0, 1.0);
-        }
+    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>) -> Color {
+        let mut depth = 0;
+        let mut attenuation = Color::new(1.0, 1.0, 1.0);
+        let mut ray = *ray;
+        while depth < MAX_BOUNCES {
+            let mut hit_result: Option<HitResult> = None;
+            let mut interval = Interval {
+                min: 0.001,
+                max: f32::INFINITY,
+            };
 
-        let mut hit_result: Option<HitResult> = None;
-        let mut interval = Interval {
-            min: 0.001,
-            max: f32::INFINITY,
-        };
+            for object in objects {
+                if let Some(hit) = object.hit(&ray, &interval)
+                    && (hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t)
+                {
+                    interval.max = hit.t;
+                    hit_result = Some(hit);
+                }
+            }
 
-        for object in objects {
-            if let Some(hit) = object.hit(ray, &interval)
-                && (hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t)
-            {
-                interval.max = hit.t;
-                hit_result = Some(hit);
+            if let Some(hit) = hit_result {
+                let material = &self.materials[hit.material_index];
+                let (scattered_ray, new_color) = material.scatter(&ray, &hit);
+                attenuation = attenuation * new_color;
+                ray = scattered_ray;
+                depth += 1;
+            } else {
+                // Background gradient
+                let unit_direction = ray.dir.normalize();
+                let t = 0.5 * (unit_direction.y + 1.0);
+                return attenuation
+                    * (Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t);
             }
         }
 
-        if let Some(hit) = hit_result {
-            let material = &self.materials[hit.material_index];
-            let (scattered_ray, attenuation) = material.scatter(ray, &hit);
-
-            return attenuation * self.ray_color(&scattered_ray, objects, depth + 1);
-        }
-
-        // Background gradient
-        let unit_direction = ray.dir.normalize();
-        let t = 0.5 * (unit_direction.y + 1.0);
-        Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t
+        attenuation
     }
 }
 
