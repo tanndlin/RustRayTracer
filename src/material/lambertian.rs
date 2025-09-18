@@ -11,7 +11,7 @@ use crate::{
 pub struct Lambertian {
     pub name: String,
     pub albedo: Color,
-    pub roughness: f64,
+    pub roughness: f32,
 }
 
 impl Material for Lambertian {
@@ -44,7 +44,7 @@ impl Material for Lambertian {
 pub struct TextureLambertian {
     pub name: String,
     pub pixels: Vec<Color>,
-    pub roughness: f64,
+    pub roughness: f32,
 }
 
 impl Material for TextureLambertian {
@@ -65,8 +65,8 @@ impl Material for TextureLambertian {
         let v = hit.v;
         let width = ((self.pixels.len() as f32).sqrt()) as usize;
         let height = width; // Assuming square texture for simplicity
-        let x = (u * width as f64) as usize % width;
-        let y = (v * height as f64) as usize % height;
+        let x = (u * width as f32) as usize % width;
+        let y = (v * height as f32) as usize % height;
         let pixel_index = y * width + x;
         let attenuation = self.pixels[pixel_index];
 

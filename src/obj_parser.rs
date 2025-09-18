@@ -52,18 +52,18 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                 if parts.len() < 4 {
                     continue;
                 }
-                let x: f64 = parts[1].parse().unwrap_or(0.0);
-                let y: f64 = parts[2].parse().unwrap_or(0.0);
-                let z: f64 = parts[3].parse().unwrap_or(0.0);
+                let x: f32 = parts[1].parse().unwrap_or(0.0);
+                let y: f32 = parts[2].parse().unwrap_or(0.0);
+                let z: f32 = parts[3].parse().unwrap_or(0.0);
                 vertices.push(Vec3 { x, y, z });
             }
             "vn" => {
                 if parts.len() < 4 {
                     continue;
                 }
-                let x: f64 = parts[1].parse().unwrap_or(0.0);
-                let y: f64 = parts[2].parse().unwrap_or(0.0);
-                let z: f64 = parts[3].parse().unwrap_or(0.0);
+                let x: f32 = parts[1].parse().unwrap_or(0.0);
+                let y: f32 = parts[2].parse().unwrap_or(0.0);
+                let z: f32 = parts[3].parse().unwrap_or(0.0);
                 v_normals.push(Vec3 { x, y, z }.normalize());
             }
             "vt" => {
@@ -71,8 +71,8 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
                 if parts.len() < 3 {
                     continue;
                 }
-                let u: f64 = parts[1].parse().unwrap_or(0.0);
-                let v: f64 = parts[2].parse().unwrap_or(0.0);
+                let u: f32 = parts[1].parse().unwrap_or(0.0);
+                let v: f32 = parts[2].parse().unwrap_or(0.0);
                 v_textures.push(Vec3 { x: u, y: v, z: 0.0 });
             }
             "f" => {
@@ -159,9 +159,9 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                 if parts.len() < 4 {
                     continue;
                 }
-                let r: f64 = parts[1].parse().unwrap_or(0.8);
-                let g: f64 = parts[2].parse().unwrap_or(0.8);
-                let b: f64 = parts[3].parse().unwrap_or(0.8);
+                let r: f32 = parts[1].parse().unwrap_or(0.8);
+                let g: f32 = parts[2].parse().unwrap_or(0.8);
+                let b: f32 = parts[3].parse().unwrap_or(0.8);
                 if let Some(name) = cur_material_name.take() {
                     materials.push(Box::new(Lambertian {
                         name,
@@ -184,9 +184,9 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     .pixels()
                     .map(|p| {
                         Color::new(
-                            p[0] as f64 / 255.0,
-                            p[1] as f64 / 255.0,
-                            p[2] as f64 / 255.0,
+                            p[0] as f32 / 255.0,
+                            p[1] as f32 / 255.0,
+                            p[2] as f32 / 255.0,
                         )
                     })
                     .collect();

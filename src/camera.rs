@@ -1,5 +1,5 @@
 use rayon::prelude::*;
-use std::f64::consts::PI;
+use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
 const TILE_SIZE: u32 = 32;
@@ -7,7 +7,7 @@ const USE_MULTITHREADING: bool = true;
 
 use crate::{
     geometry::hittable::Hittable,
-    material::{lambertian::Lambertian, material_trait::Material},
+    material::material_trait::Material,
     util::{
         hit_result::HitResult,
         interval::Interval,
@@ -37,9 +37,9 @@ impl Camera {
         let fov = 55;
 
         let theta = degrees_to_radians(fov);
-        let h = f64::tan(theta / 2.0);
+        let h = f32::tan(theta / 2.0);
         let viewport_height = 2.0 * h;
-        let viewport_width = viewport_height * image_width as f64 / image_height as f64;
+        let viewport_width = viewport_height * image_width as f32 / image_height as f32;
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
         let w = (look_from - look_at).normalize();
@@ -54,8 +54,8 @@ impl Camera {
         let viewport_upper_left = look_from - w - viewport_u * 0.5 - viewport_v * 0.5;
 
         // Calculate the horizontal and vertical delta vectors to the next pixel.
-        let pixel_delta_u = viewport_u * 1.0 / image_width as f64;
-        let pixel_delta_v = viewport_v * 1.0 / image_height as f64;
+        let pixel_delta_u = viewport_u * 1.0 / image_width as f32;
+        let pixel_delta_v = viewport_v * 1.0 / image_height as f32;
         let pixel00_loc = viewport_upper_left + pixel_delta_u * 0.5 + pixel_delta_v * 0.5;
 
         let total_pixels = image_width * image_height;
@@ -105,7 +105,7 @@ impl Camera {
             let i = pixel_index % self.image_width;
             let j = pixel_index / self.image_width;
             let pixel_center =
-                self.pixel00_loc + self.pixel_delta_u * i as f64 + self.pixel_delta_v * j as f64;
+                self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
             let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
 
             let color = self.ray_color(&ray, objects, 0);
@@ -122,7 +122,7 @@ impl Camera {
         let mut hit_result: Option<HitResult> = None;
         let mut interval = Interval {
             min: 0.001,
-            max: f64::INFINITY,
+            max: f32::INFINITY,
         };
 
         for object in objects {
@@ -148,6 +148,6 @@ impl Camera {
     }
 }
 
-fn degrees_to_radians(fov: u8) -> f64 {
-    fov as f64 / 180.0 * PI
+fn degrees_to_radians(fov: u8) -> f32 {
+    fov as f32 / 180.0 * PI
 }

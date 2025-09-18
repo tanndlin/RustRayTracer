@@ -2,13 +2,13 @@ use std::ops;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
-    pub x: f64,
-    pub y: f64,
-    pub z: f64,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
 }
 
 impl Vec3 {
-    pub fn new(x: f64, y: f64, z: f64) -> Self {
+    pub fn new(x: f32, y: f32, z: f32) -> Self {
         Self { x, y, z }
     }
 
@@ -20,7 +20,7 @@ impl Vec3 {
         }
     }
 
-    pub fn length_squared(&self) -> f64 {
+    pub fn length_squared(&self) -> f32 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
@@ -52,9 +52,9 @@ impl Vec3 {
     pub fn random_in_unit_sphere() -> Self {
         loop {
             let p = Vec3::new(
-                rand::random::<f64>() * 2.0 - 1.0,
-                rand::random::<f64>() * 2.0 - 1.0,
-                rand::random::<f64>() * 2.0 - 1.0,
+                rand::random::<f32>() * 2.0 - 1.0,
+                rand::random::<f32>() * 2.0 - 1.0,
+                rand::random::<f32>() * 2.0 - 1.0,
             );
             if p.length_squared() < 1.0 {
                 return p;
@@ -62,7 +62,7 @@ impl Vec3 {
         }
     }
 
-    pub fn dot(&self, normal: Vec3) -> f64 {
+    pub fn dot(&self, normal: Vec3) -> f32 {
         self.x * normal.x + self.y * normal.y + self.z * normal.z
     }
 }
@@ -103,10 +103,10 @@ impl ops::Mul for Vec3 {
     }
 }
 
-impl ops::Mul<f64> for Vec3 {
+impl ops::Mul<f32> for Vec3 {
     type Output = Vec3;
 
-    fn mul(self, factor: f64) -> Vec3 {
+    fn mul(self, factor: f32) -> Vec3 {
         Vec3 {
             x: self.x * factor,
             y: self.y * factor,
@@ -127,10 +127,10 @@ impl ops::Neg for Vec3 {
     }
 }
 
-impl ops::Div<f64> for Vec3 {
+impl ops::Div<f32> for Vec3 {
     type Output = Vec3;
 
-    fn div(self, divisor: f64) -> Vec3 {
+    fn div(self, divisor: f32) -> Vec3 {
         Vec3 {
             x: self.x / divisor,
             y: self.y / divisor,

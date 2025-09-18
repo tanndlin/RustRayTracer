@@ -1,15 +1,15 @@
 #[derive(Debug, Clone, Copy)]
 pub struct Interval {
-    pub min: f64,
-    pub max: f64,
+    pub min: f32,
+    pub max: f32,
 }
 
 impl Interval {
-    pub fn new(min: f64, max: f64) -> Self {
+    pub fn new(min: f32, max: f32) -> Self {
         Self { min, max }
     }
 
-    pub fn contains(&self, value: f64) -> bool {
+    pub fn contains(&self, value: f32) -> bool {
         value >= self.min && value <= self.max
     }
 }

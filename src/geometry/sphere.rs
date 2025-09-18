@@ -5,7 +5,7 @@ use crate::{
 
 pub struct Sphere {
     pub center: Vec3,
-    pub radius: f64,
+    pub radius: f32,
     pub material_index: usize,
 }
 
@@ -32,8 +32,8 @@ impl Hittable for Sphere {
         let point = ray.at(t);
         let normal = (point - self.center) / self.radius;
 
-        let u = 0.5 + (normal.z.atan2(normal.x)) / (2.0 * std::f64::consts::PI);
-        let v = 0.5 - (normal.y.asin()) / std::f64::consts::PI;
+        let u = 0.5 + (normal.z.atan2(normal.x)) / (2.0 * std::f32::consts::PI);
+        let v = 0.5 - (normal.y.asin()) / std::f32::consts::PI;
 
         Some(HitResult {
             normal,
