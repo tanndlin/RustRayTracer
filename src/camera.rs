@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
 const TILE_SIZE: u32 = 32;
-const USE_MULTITHREADING: bool = true;
 
 use crate::{
     geometry::hittable::Hittable,
@@ -78,16 +77,7 @@ impl Camera {
             (self.total_pixels as f32 / TILE_SIZE as f32 / TILE_SIZE as f32).ceil() as u32;
 
         // Each tile is a square of TILE_SIZE x TILE_SIZE pixels
-        let tiles: Vec<Vec<Vec3>> = match USE_MULTITHREADING {
-            true => (0..num_tiles)
-                .into_par_iter()
-                .map(|tile_index| self.render_tile(tile_index, objects))
-                .collect(),
-            false => (0..num_tiles)
-                .map(|tile_index| self.render_tile(tile_index, objects))
-                .collect(),
-        };
-
+        let tiles = self.collect_tiles(num_tiles, objects);
         let mut frame_buffer = vec![];
         for tile in tiles {
             for color in tile {
@@ -95,6 +85,29 @@ impl Camera {
             }
         }
         frame_buffer
+    }
+
+    #[cfg(feature = "multithreading")]
+    fn collect_tiles(
+        &self,
+        num_tiles: u32,
+        objects: &Vec<Box<dyn Hittable + Sync>>,
+    ) -> Vec<Vec<Vec3>> {
+        (0..num_tiles)
+            .into_par_iter()
+            .map(|tile_index| self.render_tile(tile_index, objects))
+            .collect()
+    }
+
+    #[cfg(not(feature = "multithreading"))]
+    fn collect_tiles(
+        &self,
+        num_tiles: u32,
+        objects: &Vec<Box<dyn Hittable + Sync>>,
+    ) -> Vec<Vec<Vec3>> {
+        (0..num_tiles)
+            .map(|tile_index| self.render_tile(tile_index, objects))
+            .collect()
     }
 
     fn render_tile(&self, tile_index: u32, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Vec3> {
