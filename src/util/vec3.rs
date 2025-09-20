@@ -1,5 +1,7 @@
 use std::ops;
 
+use rand::{Rng, SeedableRng, rngs::SmallRng};
+
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f32,
@@ -50,21 +52,29 @@ impl Vec3 {
     }
 
     pub fn random_in_unit_sphere() -> Self {
-        loop {
-            let p = Vec3::new(
-                rand::random::<f32>() * 2.0 - 1.0,
-                rand::random::<f32>() * 2.0 - 1.0,
-                rand::random::<f32>() * 2.0 - 1.0,
-            );
-            if p.length_squared() < 1.0 {
-                return p;
+        THREAD_RNG.with(|thread_rng| {
+            let mut thread_rng = thread_rng.borrow_mut();
+            loop {
+                let p = Vec3::new(
+                    thread_rng.random::<f32>() * 2.0 - 1.0,
+                    thread_rng.random::<f32>() * 2.0 - 1.0,
+                    thread_rng.random::<f32>() * 2.0 - 1.0,
+                );
+                if p.length_squared() < 1.0 {
+                    return p;
+                }
             }
-        }
+        })
     }
 
     pub fn dot(&self, normal: Vec3) -> f32 {
         self.x * normal.x + self.y * normal.y + self.z * normal.z
     }
+}
+
+thread_local! {
+    static THREAD_RNG: std::cell::RefCell<SmallRng> =
+        std::cell::RefCell::new(SmallRng::from_rng(&mut rand::rng()));
 }
 
 impl ops::Add for Vec3 {

@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
 const TILE_SIZE: u32 = 32;
+const SAMPLES_PER_PIXEL: u32 = 10;
 
 use crate::{
     geometry::hittable::Hittable,
@@ -14,6 +15,8 @@ use crate::{
         vec3::{Color, Vec3, cross},
     },
 };
+use std::sync::Arc;
+use std::sync::atomic::{AtomicU32, Ordering};
 
 pub struct Camera {
     pub image_width: u32,
@@ -78,6 +81,7 @@ impl Camera {
 
         // Each tile is a square of TILE_SIZE x TILE_SIZE pixels
         let tiles = self.collect_tiles(num_tiles, objects);
+        println!(); // New line after progress output
         let mut frame_buffer = vec![];
         for tile in tiles {
             for color in tile {
@@ -93,9 +97,15 @@ impl Camera {
         num_tiles: u32,
         objects: &Vec<Box<dyn Hittable + Sync>>,
     ) -> Vec<Vec<Vec3>> {
+        let tiles_rendered = Arc::new(AtomicU32::new(0));
         (0..num_tiles)
             .into_par_iter()
-            .map(|tile_index| self.render_tile(tile_index, objects))
+            .map(|tile_index| {
+                let ret = self.render_tile(tile_index, objects);
+                let rendered = tiles_rendered.fetch_add(1, Ordering::SeqCst) + 1;
+                print!("\rRendered {}/{} tiles...", rendered, num_tiles);
+                ret
+            })
             .collect()
     }
 
@@ -105,8 +115,14 @@ impl Camera {
         num_tiles: u32,
         objects: &Vec<Box<dyn Hittable + Sync>>,
     ) -> Vec<Vec<Vec3>> {
+        let tiles_rendered = Arc::new(AtomicU32::new(0));
         (0..num_tiles)
-            .map(|tile_index| self.render_tile(tile_index, objects))
+            .map(|tile_index| {
+                let ret = self.render_tile(tile_index, objects);
+                let rendered = tiles_rendered.fetch_add(1, Ordering::SeqCst) + 1;
+                print!("\rRendered {}/{} tiles...", rendered, num_tiles);
+                ret
+            })
             .collect()
     }
 
@@ -121,8 +137,11 @@ impl Camera {
                 self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
             let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
 
-            let color = self.ray_color(&ray, objects);
-            tile_buffer.push(color);
+            let mut color = Vec3::zero();
+            for _ in 0..SAMPLES_PER_PIXEL {
+                color = color + self.ray_color(&ray, objects);
+            }
+            tile_buffer.push(color / SAMPLES_PER_PIXEL as f32);
         }
         tile_buffer
     }

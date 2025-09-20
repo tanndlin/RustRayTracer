@@ -166,7 +166,7 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     materials.push(Box::new(Lambertian {
                         name,
                         albedo: Vec3 { x: r, y: g, z: b },
-                        roughness: 0.0,
+                        roughness: 1.0,
                     }) as Box<dyn Material>);
                 }
             }
@@ -195,7 +195,7 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     materials.push(Box::new(TextureLambertian {
                         name,
                         pixels,
-                        roughness: 0.0,
+                        roughness: 1.0,
                     }) as Box<dyn Material>);
                 }
             }
