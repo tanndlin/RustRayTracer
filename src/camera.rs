@@ -11,12 +11,11 @@ use crate::{
     util::{
         hit_result::HitResult,
         interval::Interval,
+        progress::progress_bar,
         ray::Ray,
         vec3::{Color, Vec3, cross},
     },
 };
-use std::sync::Arc;
-use std::sync::atomic::{AtomicU32, Ordering};
 
 pub struct Camera {
     pub image_width: u32,
@@ -93,28 +92,16 @@ impl Camera {
 
     #[cfg(feature = "multithreading")]
     fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
-        let tiles_rendered = Arc::new(AtomicU32::new(0));
-        (0..num_tiles)
+        progress_bar(0..num_tiles)
             .into_par_iter()
-            .map(|tile_index| {
-                let ret = self.render_tile(tile_index, objects);
-                let rendered = tiles_rendered.fetch_add(1, Ordering::SeqCst) + 1;
-                print!("\rRendered {}/{} tiles...", rendered, num_tiles);
-                ret
-            })
+            .map(|tile_index| self.render_tile(tile_index, objects))
             .collect()
     }
 
     #[cfg(not(feature = "multithreading"))]
     fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
-        let tiles_rendered = Arc::new(AtomicU32::new(0));
-        (0..num_tiles)
-            .map(|tile_index| {
-                let ret = self.render_tile(tile_index, objects);
-                let rendered = tiles_rendered.fetch_add(1, Ordering::SeqCst) + 1;
-                print!("\rRendered {}/{} tiles...", rendered, num_tiles);
-                ret
-            })
+        progress_bar(0..num_tiles)
+            .map(|tile_index| self.render_tile(tile_index, objects))
             .collect()
     }
 
