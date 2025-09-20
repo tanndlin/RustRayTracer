@@ -1,4 +1,3 @@
-use std::ops::Add;
 
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},

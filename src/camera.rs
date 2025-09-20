@@ -81,13 +81,7 @@ impl Camera {
         // Each tile is a square of TILE_SIZE x TILE_SIZE pixels
         let tiles = self.collect_tiles(num_tiles, objects);
         println!(); // New line after progress output
-        let mut frame_buffer = vec![];
-        for tile in tiles {
-            for color in tile {
-                frame_buffer.push(color);
-            }
-        }
-        frame_buffer
+        tiles.into_iter().flatten().collect()
     }
 
     #[cfg(feature = "multithreading")]
