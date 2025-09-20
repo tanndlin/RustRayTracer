@@ -1,3 +1,5 @@
+use std::ops::Add;
+
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{
@@ -8,7 +10,6 @@ use crate::{
     },
 };
 
-#[derive(Clone, Copy, Debug)]
 pub struct Tri {
     pub v0: Vec3,
     pub v1: Vec3,
@@ -19,6 +20,7 @@ pub struct Tri {
     face_normal: Vec3,
     edge_ab: Vec3,
     edge_ac: Vec3,
+    bounds: Bounds,
 
     material_index: usize,
 }
@@ -36,6 +38,10 @@ impl Tri {
         let edge_ab = v1 - v0;
         let edge_ac = v2 - v0;
         let face_normal = cross(edge_ab, edge_ac);
+        let bounds = Bounds {
+            min: min(v0, min(v1, v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
+            max: max(v0, max(v1, v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
+        };
 
         Tri {
             v0,
@@ -46,6 +52,7 @@ impl Tri {
             face_normal,
             edge_ab,
             edge_ac,
+            bounds,
             material_index,
         }
     }
@@ -66,7 +73,7 @@ impl Hittable for Tri {
 
         // Calculate dst to triangle
         let dst = ao.dot(self.face_normal) * inv_det;
-        if dst < 0.0 || !interval.contains(dst) {
+        if !interval.contains(dst) {
             return None;
         }
 
@@ -113,21 +120,8 @@ impl Hittable for Tri {
         })
     }
 
-    fn get_bounds(&self) -> Bounds {
-        let min = min(self.v0, min(self.v1, self.v2))
-            - Vec3 {
-                x: 1e-6,
-                y: 1e-6,
-                z: 1e-6,
-            };
-        let max = max(self.v0, max(self.v1, self.v2))
-            + Vec3 {
-                x: 1e-6,
-                y: 1e-6,
-                z: 1e-6,
-            };
-
-        Bounds { min, max }
+    fn get_bounds(&self) -> &Bounds {
+        &self.bounds
     }
 
     fn translate(&mut self, vec: &Vec3) {

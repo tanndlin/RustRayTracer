@@ -6,7 +6,7 @@ use crate::{
     util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
-const MIN_CHILDREN: usize = 10;
+const MIN_CHILDREN: usize = 8;
 
 pub enum AABBType<T> {
     Recursive(RecursiveAABB<T>),
@@ -35,21 +35,18 @@ impl<T: Hittable> AABB<T> {
 
         let mut sorted_tris = children;
         sorted_tris.sort_by(|a, b| {
-            let a_bounds = a.get_bounds();
-            let b_bounds = b.get_bounds();
-            let a_center = a_bounds.min + a_bounds.max * 0.5;
-            let b_center = b_bounds.min + b_bounds.max * 0.5;
-
+            let ac = (a.get_bounds().min + a.get_bounds().max) * 0.5;
+            let bc = (b.get_bounds().min + b.get_bounds().max) * 0.5;
             match longest_axis {
-                Axis::X => a_center.x.partial_cmp(&b_center.x).unwrap(),
-                Axis::Y => a_center.y.partial_cmp(&b_center.y).unwrap(),
-                Axis::Z => a_center.z.partial_cmp(&b_center.z).unwrap(),
+                Axis::X => ac.x.total_cmp(&bc.x),
+                Axis::Y => ac.y.total_cmp(&bc.y),
+                Axis::Z => ac.z.total_cmp(&bc.z),
             }
         });
 
         let mid = num_children / 2;
-        let left_tris = sorted_tris.split_off(mid);
-        let right_tris = sorted_tris;
+        let right_tris = sorted_tris.split_off(mid);
+        let left_tris = sorted_tris;
 
         let left_aabb = AABB::new(left_tris);
         let right_aabb = AABB::new(right_tris);
@@ -63,9 +60,13 @@ impl<T: Hittable> AABB<T> {
     }
 
     fn calc_bounds(tris: &[T]) -> Bounds {
-        let mut bounds = tris[0].get_bounds();
-        for tri in &tris[1..] {
-            bounds.expand_to_contain(&tri.get_bounds());
+        let mut bounds = Bounds {
+            min: Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
+            max: Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
+        };
+
+        for tri in tris {
+            bounds.expand_to_contain(tri.get_bounds());
         }
 
         bounds
@@ -100,8 +101,8 @@ impl<T: Hittable> Hittable for AABB<T> {
         }
     }
 
-    fn get_bounds(&self) -> Bounds {
-        self.bounds
+    fn get_bounds(&self) -> &Bounds {
+        &self.bounds
     }
 
     fn translate(&mut self, vec: &Vec3) {
@@ -137,31 +138,24 @@ impl<T: Hittable> RecursiveAABB<T> {
         let right_bounds = self.right.bounds.hit(ray, interval);
 
         match (left_bounds, right_bounds) {
-            (Some(t_left), Some(t_right)) => {
-                // Decide which child is nearer based on entry distance
-                let (first, second, far_bounds) = if t_left.min < t_right.min {
-                    (&self.left, &self.right, t_right)
-                } else {
-                    (&self.right, &self.left, t_left)
+            (Some(lb), Some(rb)) => {
+                let (first, second, far_bounds) = match lb.min < rb.min {
+                    true => (&self.left, &self.right, rb),
+                    false => (&self.right, &self.left, lb),
                 };
 
-                // Traverse near child
                 if let Some(hit) = first.hit(ray, interval) {
-                    // Early out: if the hit is before far box's entry, skip far child
-                    if hit.t < far_bounds.min {
-                        return Some(hit);
-                    }
-                    // Otherwise, check far child too (with reduced interval)
-                    if let Some(hit2) = second.hit(ray, &Interval::new(interval.min, hit.t)) {
-                        return Some(if hit.t < hit2.t { hit } else { hit2 });
-                    }
-                    return Some(hit);
+                    return Some(match hit.t < far_bounds.min {
+                        true => hit,
+                        false => match second.hit(ray, &Interval::new(interval.min, hit.t)) {
+                            Some(hit2) if hit2.t < hit.t => hit2,
+                            _ => hit,
+                        },
+                    });
                 }
 
-                // No hit in near → must try far
                 second.hit(ray, interval)
             }
-
             (Some(_), None) => self.left.hit(ray, interval),
             (None, Some(_)) => self.right.hit(ray, interval),
             (None, None) => None,

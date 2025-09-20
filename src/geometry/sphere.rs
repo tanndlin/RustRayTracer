@@ -6,7 +6,30 @@ use crate::{
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
+    bounds: Bounds,
     pub material_index: usize,
+}
+
+impl Sphere {
+    pub fn new(center: Vec3, radius: f32, material_index: usize) -> Self {
+        let r_vec = Vec3 {
+            x: radius,
+            y: radius,
+            z: radius,
+        };
+
+        let bounds = Bounds {
+            min: center - r_vec,
+            max: center + r_vec,
+        };
+
+        Sphere {
+            center,
+            radius,
+            bounds,
+            material_index,
+        }
+    }
 }
 
 impl Hittable for Sphere {
@@ -45,17 +68,8 @@ impl Hittable for Sphere {
         })
     }
 
-    fn get_bounds(&self) -> Bounds {
-        let r_vec = Vec3 {
-            x: self.radius,
-            y: self.radius,
-            z: self.radius,
-        };
-
-        Bounds {
-            min: self.center - r_vec,
-            max: self.center + r_vec,
-        }
+    fn get_bounds(&self) -> &Bounds {
+        &self.bounds
     }
 
     fn translate(&mut self, vec: &Vec3) {

@@ -1,4 +1,3 @@
-#[derive(Debug, Clone, Copy)]
 pub struct Interval {
     pub min: f32,
     pub max: f32,

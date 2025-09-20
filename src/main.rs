@@ -1,4 +1,5 @@
 use crate::camera::Camera;
+use crate::geometry::hittable::HittableType;
 use crate::geometry::{hittable::Hittable, mesh::Mesh, sphere::Sphere};
 use crate::util::vec3::Vec3;
 
@@ -9,21 +10,13 @@ mod obj_parser;
 mod util;
 
 fn main() {
-    let sphere = Sphere {
-        center: Vec3 {
-            x: 5.0,
-            y: 0.0,
-            z: 0.0,
-        },
-        radius: 1.0,
-        material_index: 0,
-    };
+    let sphere = Sphere::new(Vec3::new(5.0, 0.0, 0.0), 1.0, 0);
 
     let (tris, materials) = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
     let mut mesh = Mesh::new(tris);
     mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
 
-    let objects: Vec<Box<dyn Hittable + Sync>> = vec![Box::new(sphere), Box::new(mesh)];
+    let objects: Vec<HittableType> = vec![HittableType::Sphere(sphere), HittableType::Mesh(mesh)];
     let camera = Camera::new(16.0 / 9.0, 1000, materials);
     println!("Rendering...");
 

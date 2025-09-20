@@ -2,12 +2,12 @@ use rayon::prelude::*;
 use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
-const TILE_SIZE: u32 = 32;
+const TILE_SIZE: u32 = 16;
 const SAMPLES_PER_PIXEL: u32 = 10;
 
 use crate::{
-    geometry::hittable::Hittable,
-    material::material_trait::Material,
+    geometry::hittable::{Hittable, HittableType},
+    material::material_trait::{Material, MaterialType},
     util::{
         hit_result::HitResult,
         interval::Interval,
@@ -22,7 +22,7 @@ pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
     look_from: Vec3,
-    materials: Vec<Box<dyn Material>>,
+    materials: Vec<MaterialType>,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel00_loc: Vec3,
@@ -30,7 +30,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f32, image_width: u32, materials: Vec<Box<dyn Material>>) -> Self {
+    pub fn new(aspect_ratio: f32, image_width: u32, materials: Vec<MaterialType>) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
         let look_from = Vec3::new(-3.0, 0.5, -2.0);
@@ -74,7 +74,7 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Color> {
+    pub fn render(&self, objects: &Vec<HittableType>) -> Vec<Color> {
         // Determine viewport dimensions.
         let num_tiles =
             (self.total_pixels as f32 / TILE_SIZE as f32 / TILE_SIZE as f32).ceil() as u32;
@@ -92,11 +92,7 @@ impl Camera {
     }
 
     #[cfg(feature = "multithreading")]
-    fn collect_tiles(
-        &self,
-        num_tiles: u32,
-        objects: &Vec<Box<dyn Hittable + Sync>>,
-    ) -> Vec<Vec<Vec3>> {
+    fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
         let tiles_rendered = Arc::new(AtomicU32::new(0));
         (0..num_tiles)
             .into_par_iter()
@@ -110,11 +106,7 @@ impl Camera {
     }
 
     #[cfg(not(feature = "multithreading"))]
-    fn collect_tiles(
-        &self,
-        num_tiles: u32,
-        objects: &Vec<Box<dyn Hittable + Sync>>,
-    ) -> Vec<Vec<Vec3>> {
+    fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
         let tiles_rendered = Arc::new(AtomicU32::new(0));
         (0..num_tiles)
             .map(|tile_index| {
@@ -126,7 +118,7 @@ impl Camera {
             .collect()
     }
 
-    fn render_tile(&self, tile_index: u32, objects: &Vec<Box<dyn Hittable + Sync>>) -> Vec<Vec3> {
+    fn render_tile(&self, tile_index: u32, objects: &Vec<HittableType>) -> Vec<Vec3> {
         let mut tile_buffer = vec![];
         let start_pixel = tile_index * TILE_SIZE * TILE_SIZE;
         let end_pixel = ((tile_index + 1) * TILE_SIZE * TILE_SIZE).min(self.total_pixels);
@@ -146,7 +138,7 @@ impl Camera {
         tile_buffer
     }
 
-    fn ray_color(&self, ray: &Ray, objects: &Vec<Box<dyn Hittable + Sync>>) -> Color {
+    fn ray_color(&self, ray: &Ray, objects: &Vec<HittableType>) -> Color {
         let mut depth = 0;
         let mut attenuation = Color::new(1.0, 1.0, 1.0);
         let mut ray = *ray;

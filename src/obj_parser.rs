@@ -2,22 +2,22 @@ use crate::{
     geometry::tri::Tri,
     material::{
         lambertian::{Lambertian, TextureLambertian},
-        material_trait::Material,
+        material_trait::{Material, MaterialType},
     },
     util::vec3::{Color, Vec3},
 };
 
-pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
+pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
     let mut vertices: Vec<Vec3> = vec![];
     let mut v_normals: Vec<Vec3> = vec![];
     let mut v_textures: Vec<Vec3> = vec![];
     let mut tris: Vec<Tri> = vec![];
-    let mut materials = vec![Box::new(Lambertian {
+    let mut materials = vec![MaterialType::Lambertian(Lambertian {
         name: "default".to_string(),
         albedo: Vec3::new(1.0, 0.0, 1.0),
         roughness: 1.0,
-    }) as Box<dyn Material>];
+    })];
 
     let mut current_material_index = 0;
 
@@ -137,7 +137,7 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<Box<dyn Material>>) {
     (tris, materials)
 }
 
-pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
+pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
     let file = std::fs::read_to_string(path).expect("Failed to read .mtl file");
 
     let mut materials = vec![];
@@ -163,11 +163,11 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                 let g: f32 = parts[2].parse().unwrap_or(0.8);
                 let b: f32 = parts[3].parse().unwrap_or(0.8);
                 if let Some(name) = cur_material_name.take() {
-                    materials.push(Box::new(Lambertian {
+                    materials.push(MaterialType::Lambertian(Lambertian {
                         name,
                         albedo: Vec3 { x: r, y: g, z: b },
                         roughness: 1.0,
-                    }) as Box<dyn Material>);
+                    }));
                 }
             }
             "map_Kd" => {
@@ -192,11 +192,11 @@ pub fn parse_mtl(path: &str) -> Vec<Box<dyn Material>> {
                     .collect();
 
                 if let Some(name) = cur_material_name.take() {
-                    materials.push(Box::new(TextureLambertian {
+                    materials.push(MaterialType::TextureLambertian(TextureLambertian {
                         name,
                         pixels,
                         roughness: 1.0,
-                    }) as Box<dyn Material>);
+                    }));
                 }
             }
             _ => {}

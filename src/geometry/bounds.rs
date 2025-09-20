@@ -10,7 +10,6 @@ pub enum Axis {
     Z,
 }
 
-#[derive(Clone, Copy, Debug)]
 pub struct Bounds {
     pub min: Vec3,
     pub max: Vec3,
@@ -69,13 +68,12 @@ impl Bounds {
         }
         t_min = t_min.max(t0);
         t_max = t_max.min(t1);
-        if t_max > t_min {
-            Some(Interval {
+        match t_max >= t_min {
+            false => None,
+            true => Some(Interval {
                 min: t_min,
                 max: t_max,
-            })
-        } else {
-            None
+            }),
         }
     }
 }

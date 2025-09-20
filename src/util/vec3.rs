@@ -27,11 +27,10 @@ impl Vec3 {
     }
 
     pub fn normalize(&self) -> Vec3 {
-        let length = self.length_squared().powf(0.5);
-        Vec3 {
-            x: self.x / length,
-            y: self.y / length,
-            z: self.z / length,
+        let len = self.length_squared().sqrt();
+        match len > 1e-8 {
+            true => *self / len,
+            false => Vec3::zero(),
         }
     }
 

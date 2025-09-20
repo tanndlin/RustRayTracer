@@ -1,25 +1,25 @@
 use crate::{
-    geometry::{aabb::AABB, bounds::Bounds, hittable::Hittable},
+    geometry::{aabb::AABB, bounds::Bounds, hittable::Hittable, tri::Tri},
     util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
-pub struct Mesh<T: Hittable> {
-    pub aabb: AABB<T>,
+pub struct Mesh {
+    pub aabb: AABB<Tri>,
 }
 
-impl<T: Hittable> Mesh<T> {
-    pub fn new(children: Vec<T>) -> Self {
+impl Mesh {
+    pub fn new(children: Vec<Tri>) -> Self {
         let aabb = AABB::new(children);
         Mesh { aabb }
     }
 }
 
-impl<T: Hittable> Hittable for Mesh<T> {
+impl Hittable for Mesh {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         self.aabb.hit(ray, interval)
     }
 
-    fn get_bounds(&self) -> Bounds {
+    fn get_bounds(&self) -> &Bounds {
         self.aabb.get_bounds()
     }
 
