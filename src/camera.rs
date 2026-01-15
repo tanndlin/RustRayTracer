@@ -126,7 +126,7 @@ impl Camera {
         while depth < MAX_BOUNCES {
             let mut hit_result: Option<HitResult> = None;
             let mut interval = Interval {
-                min: 0.001,
+                min: 0.00001,
                 max: f32::INFINITY,
             };
 
