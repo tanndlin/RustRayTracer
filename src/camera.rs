@@ -1,4 +1,3 @@
-use rayon::prelude::*;
 use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
@@ -11,7 +10,7 @@ use crate::{
     util::{
         hit_result::HitResult,
         interval::Interval,
-        progress::progress_bar,
+        progress::make_progress_bar,
         ray::Ray,
         vec3::{Color, Vec3, cross},
     },
@@ -74,27 +73,29 @@ impl Camera {
     }
 
     pub fn render(&self, objects: &Vec<HittableType>) -> Vec<Color> {
-        // Determine viewport dimensions.
         let num_tiles =
             (self.total_pixels as f32 / TILE_SIZE as f32 / TILE_SIZE as f32).ceil() as u32;
-
-        // Each tile is a square of TILE_SIZE x TILE_SIZE pixels
-        let tiles = self.collect_tiles(num_tiles, objects);
-        println!(); // New line after progress output
-        tiles.into_iter().flatten().collect()
+        self.collect_tiles(num_tiles, objects)
+            .into_iter()
+            .flatten()
+            .collect()
     }
 
     #[cfg(feature = "multithreading")]
     fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
-        progress_bar(0..num_tiles)
+        use indicatif::ParallelProgressIterator;
+        use rayon::prelude::*;
+        (0..num_tiles)
             .into_par_iter()
+            .progress_with(make_progress_bar(num_tiles as u64))
             .map(|tile_index| self.render_tile(tile_index, objects))
             .collect()
     }
 
     #[cfg(not(feature = "multithreading"))]
     fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
-        progress_bar(0..num_tiles)
+        (0..num_tiles)
+            .progress_with(make_progress_bar(num_tiles as u64))
             .map(|tile_index| self.render_tile(tile_index, objects))
             .collect()
     }
