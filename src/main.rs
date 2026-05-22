@@ -10,14 +10,18 @@ mod obj_parser;
 mod util;
 
 fn main() {
-    let sphere = Sphere::new(Vec3::new(5.0, 0.0, 0.0), 1.0, 0);
-
     let (tris, materials) = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
     let mut mesh = Mesh::new(tris);
     mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
 
-    let objects: Vec<HittableType> = vec![HittableType::Sphere(sphere), HittableType::Mesh(mesh)];
-    let camera = Camera::new(16.0 / 9.0, 1000, materials);
+    let mut objects: Vec<HittableType> = vec![HittableType::Mesh(mesh)];
+    objects.push(HittableType::Sphere(Sphere::new(
+        Vec3::new(5.0, 1.0, 0.0),
+        1.0,
+        0,
+    )));
+
+    let camera = Camera::new(16.0 / 9.0, 1000, materials, true);
     println!("Rendering...");
 
     let start = std::time::Instant::now();

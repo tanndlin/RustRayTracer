@@ -1,4 +1,3 @@
-
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{

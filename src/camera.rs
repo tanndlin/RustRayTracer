@@ -25,10 +25,16 @@ pub struct Camera {
     pixel_delta_v: Vec3,
     pixel00_loc: Vec3,
     total_pixels: u32,
+    use_background_gradient: bool,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f32, image_width: u32, materials: Vec<MaterialType>) -> Self {
+    pub fn new(
+        aspect_ratio: f32,
+        image_width: u32,
+        materials: Vec<MaterialType>,
+        use_background_gradient: bool,
+    ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
         let look_from = Vec3::new(-3.0, 0.5, -2.0);
@@ -69,6 +75,7 @@ impl Camera {
             pixel_delta_u,
             pixel_delta_v,
             total_pixels,
+            use_background_gradient,
         }
     }
 
@@ -142,16 +149,24 @@ impl Camera {
 
             if let Some(hit) = hit_result {
                 let material = &self.materials[hit.material_index];
+                if matches!(material, MaterialType::Emissive(_)) {
+                    return attenuation * material.scatter(&ray, &hit).1;
+                }
+
                 let (scattered_ray, new_color) = material.scatter(&ray, &hit);
                 attenuation = attenuation * new_color;
                 ray = scattered_ray;
                 depth += 1;
             } else {
                 // Background gradient
-                let unit_direction = ray.dir.normalize();
-                let t = 0.5 * (unit_direction.y + 1.0);
-                return attenuation
-                    * (Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t);
+                if self.use_background_gradient {
+                    let unit_direction = ray.dir.normalize();
+                    let t = 0.5 * (unit_direction.y + 1.0);
+                    return attenuation
+                        * (Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t);
+                }
+
+                return Color::new(0.0, 0.0, 0.0);
             }
         }
 
