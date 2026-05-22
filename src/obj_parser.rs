@@ -1,7 +1,7 @@
 use crate::{
     geometry::tri::Tri,
     material::{
-        lambertian::{Lambertian, TextureLambertian},
+        lambertian::LambertianBase,
         material_trait::{Material, MaterialType},
     },
     util::vec3::{Color, Vec3},
@@ -13,10 +13,11 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
     let mut v_normals: Vec<Vec3> = vec![];
     let mut v_textures: Vec<Vec3> = vec![];
     let mut tris: Vec<Tri> = vec![];
-    let mut materials = vec![MaterialType::Lambertian(Lambertian {
+    let mut materials = vec![MaterialType::Lambertian(LambertianBase {
         name: "default".to_string(),
         albedo: Vec3::new(1.0, 0.0, 1.0),
         roughness: 1.0,
+        alpha: 1.0,
     })];
 
     let mut current_material_index = 0;
@@ -153,6 +154,13 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
             "newmtl" => {
                 let name = parts.get(1).unwrap_or(&"default").to_string();
                 cur_material_name = Some(name.clone());
+                // Push a default material for now; we'll update it when we get more info
+                materials.push(MaterialType::Lambertian(LambertianBase {
+                    name,
+                    albedo: Vec3::new(0.8, 0.8, 0.8),
+                    roughness: 1.0,
+                    alpha: 1.0,
+                }));
             }
             "Kd" => {
                 // Diffuse color
@@ -162,12 +170,11 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                 let r: f32 = parts[1].parse().unwrap_or(0.8);
                 let g: f32 = parts[2].parse().unwrap_or(0.8);
                 let b: f32 = parts[3].parse().unwrap_or(0.8);
-                if let Some(name) = cur_material_name.take() {
-                    materials.push(MaterialType::Lambertian(Lambertian {
-                        name,
-                        albedo: Vec3 { x: r, y: g, z: b },
-                        roughness: 1.0,
-                    }));
+                if let Some(name) = cur_material_name.take()
+                    && let Some(MaterialType::Lambertian(mat)) = materials.last_mut()
+                {
+                    mat.name = name;
+                    mat.albedo = Vec3::new(r, g, b);
                 }
             }
             "map_Kd" => {
@@ -191,12 +198,34 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                     })
                     .collect();
 
-                if let Some(name) = cur_material_name.take() {
-                    materials.push(MaterialType::TextureLambertian(TextureLambertian {
-                        name,
-                        pixels,
-                        roughness: 1.0,
-                    }));
+                if let Some(name) = cur_material_name.take()
+                    && let Some(last) = materials.pop()
+                {
+                    match last {
+                        MaterialType::Lambertian(mat) => {
+                            let mut new_mat = LambertianBase::<Vec<Color>>::from(mat);
+                            new_mat.name = name;
+                            new_mat.albedo = pixels;
+                            materials.push(MaterialType::TextureLambertian(new_mat));
+                        }
+                        other => {
+                            // If it wasn't a Lambertian, just put it back unchanged
+                            eprint!(
+                                "Warning: Material type {:?} does not support textures. Skipping texture.",
+                                other.get_name()
+                            );
+                            materials.push(other);
+                        }
+                    }
+                }
+            }
+            "d" => {
+                if parts.len() < 2 {
+                    continue;
+                }
+                let alpha: f32 = parts[1].parse().unwrap_or(1.0);
+                if let Some(MaterialType::Lambertian(mat)) = materials.last_mut() {
+                    mat.alpha = alpha;
                 }
             }
             _ => {}

@@ -72,7 +72,7 @@ impl Vec3 {
 }
 
 thread_local! {
-    static THREAD_RNG: std::cell::RefCell<SmallRng> =
+    pub static THREAD_RNG: std::cell::RefCell<SmallRng> =
         std::cell::RefCell::new(SmallRng::from_rng(&mut rand::rng()));
 }
 

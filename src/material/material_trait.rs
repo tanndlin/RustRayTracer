@@ -1,5 +1,5 @@
 use crate::{
-    material::lambertian::{Lambertian, TextureLambertian},
+    material::lambertian::LambertianBase,
     util::{hit_result::HitResult, ray::Ray, vec3::Color},
 };
 
@@ -9,8 +9,8 @@ pub trait Material: Send + Sync {
 }
 
 pub enum MaterialType {
-    Lambertian(Lambertian),
-    TextureLambertian(TextureLambertian),
+    Lambertian(LambertianBase<Color>),
+    TextureLambertian(LambertianBase<Vec<Color>>),
 }
 
 impl Material for MaterialType {
