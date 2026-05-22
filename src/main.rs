@@ -1,16 +1,20 @@
 use crate::camera::Camera;
-use crate::geometry::hittable::HittableType;
-use crate::geometry::{hittable::Hittable, mesh::Mesh, sphere::Sphere};
-use crate::util::vec3::Vec3;
+use crate::geometry::{
+    hittable::{Hittable, HittableType},
+    mesh::Mesh,
+    sphere::Sphere,
+};
+use crate::util::{parser::glb::glb_parser::parse_glb, vec3::Vec3};
 
 mod camera;
 mod geometry;
 mod material;
-mod obj_parser;
 mod util;
 
 fn main() {
-    let (tris, materials) = obj_parser::parse_obj("src/objs/Chess/Chess.obj");
+    let (tris, materials) = parse_glb("src/objs/Chess/Chess.glb");
+    return;
+
     let mut mesh = Mesh::new(tris);
     mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
 
