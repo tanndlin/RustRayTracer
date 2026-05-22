@@ -12,3 +12,7 @@ rayon = "1.12.0"
 [features]
 default = ["multithreading"]
 multithreading = []
+
+[profile.release]
+debug = true
+strip = false
