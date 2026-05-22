@@ -1,6 +1,6 @@
 use std::ops;
 
-use rand::{Rng, SeedableRng, rngs::SmallRng};
+use rand::{RngExt, SeedableRng, rngs::SmallRng};
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
