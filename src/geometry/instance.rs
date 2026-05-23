@@ -5,7 +5,13 @@ use crate::{
         bounds::Bounds,
         hittable::{Hittable, HittableType},
     },
-    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
+    util::{
+        hit_result::HitResult,
+        interval::Interval,
+        parser::glb::gltf::{Mesh, Node},
+        ray::Ray,
+        vec3::Vec3,
+    },
 };
 
 pub struct Instance {
@@ -14,7 +20,7 @@ pub struct Instance {
     pub base: Arc<HittableType>,
 }
 
-impl<'a> Instance {
+impl Instance {
     pub fn new(mesh_index: usize, translation: Vec3, base: Arc<HittableType>) -> Self {
         Self {
             mesh_index,
@@ -40,5 +46,21 @@ impl Hittable for Instance {
 
     fn translate(&mut self, vec: &Vec3) {
         self.translation = self.translation + *vec;
+    }
+}
+
+impl From<(&[Arc<HittableType>], Node)> for Instance {
+    fn from(value: (&[Arc<HittableType>], Node)) -> Self {
+        let (meshes, node) = value;
+        let mesh_index = node
+            .mesh
+            .expect("GLTF node must have a mesh to be instanced") as usize;
+        let translation = Vec3::from(node.translation.unwrap_or(vec![0.0, 0.0, 0.0]));
+        let base = meshes
+            .get(mesh_index)
+            .expect("Mesh index out of bounds for GLTF node")
+            .clone();
+
+        Self::new(mesh_index, translation, base)
     }
 }

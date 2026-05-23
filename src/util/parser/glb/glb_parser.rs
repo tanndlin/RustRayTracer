@@ -1,9 +1,12 @@
-use std::io::Read;
+use std::{io::Read, sync::Arc};
 
 use crate::{
     geometry::hittable::HittableType,
     material::material_trait::MaterialType,
-    util::parser::glb::{gltf::GltfData, types::Chunk},
+    util::parser::glb::{
+        gltf::GltfData,
+        types::{Chunk, ChunkType},
+    },
 };
 
 pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
@@ -42,8 +45,39 @@ pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         let json_str = String::from_utf8_lossy(&json_chunk.data);
         serde_json::from_str::<GltfData>(&json_str).expect("Failed to parse JSON chunk as GltfData")
     };
+    let binary_chunk = chunks
+        .iter()
+        .find(|chunk| matches!(chunk.chunk_type, ChunkType::Binary))
+        .expect("GLB file must contain a binary chunk");
 
-    dbg!(gltf_data.asset);
+    assemble_scene(gltf_data, binary_chunk)
+}
+
+fn assemble_scene(
+    gltf_data: GltfData,
+    binary_chunk: &Chunk,
+) -> (Vec<HittableType>, Vec<MaterialType>) {
+    let scene = gltf_data
+        .scenes
+        .get(gltf_data.scene as usize)
+        .expect("Scene index out of bounds");
+
+    let intance_bases = gltf_data
+        .meshes
+        .iter()
+        .map(|mesh| Arc::new(HittableType::from(mesh)))
+        .collect::<Vec<_>>();
+
+    let nodes = scene
+        .nodes
+        .iter()
+        .map(|&node_index| {
+            gltf_data
+                .nodes
+                .get(node_index as usize)
+                .expect("Node index out of bounds")
+        })
+        .collect::<Vec<_>>();
 
     (vec![], vec![])
 }

@@ -26,11 +26,11 @@ pub struct Accessor {
     max: Option<Vec<f64>>,
     min: Option<Vec<f64>>,
     #[serde(rename = "type")]
-    accessor_type: Type,
+    accessor_type: AccessorType,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Type {
+pub enum AccessorType {
     #[serde(rename = "SCALAR")]
     Scalar,
     #[serde(rename = "VEC2")]
@@ -95,14 +95,14 @@ pub struct PbrMetallicRoughness {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Mesh {
     name: String,
-    primitives: Vec<Primitive>,
+    pub primitives: Vec<Primitive>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Primitive {
-    attributes: Attributes,
-    indices: i64,
-    material: Option<i64>,
+    pub attributes: Attributes,
+    pub indices: i64,
+    pub material: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -115,11 +115,11 @@ pub struct Attributes {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Node {
-    mesh: Option<i64>,
+    pub mesh: Option<i64>,
     name: String,
     rotation: Option<Vec<f64>>,
     scale: Option<Vec<f64>>,
-    translation: Option<Vec<f64>>,
+    pub translation: Option<Vec<f64>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -132,12 +132,11 @@ pub struct Sampler {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Scene {
     name: String,
-    nodes: Vec<i64>,
+    pub nodes: Vec<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TextureElement {
     sampler: i64,
-
     source: i64,
 }
