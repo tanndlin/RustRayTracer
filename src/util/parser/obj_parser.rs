@@ -1,5 +1,5 @@
 use crate::{
-    geometry::tri::Tri,
+    geometry::{hittable::HittableType, mesh::Mesh, tri::Tri},
     material::{
         lambertian::LambertianBase,
         material_trait::{Material, MaterialType},
@@ -7,7 +7,7 @@ use crate::{
     util::{parser::mtl_parser::parse_mtl, vec3::Vec3},
 };
 
-pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
+pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
     let mut vertices: Vec<Vec3> = vec![];
     let mut v_normals: Vec<Vec3> = vec![];
@@ -135,5 +135,8 @@ pub fn parse_obj(_path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
         }
     }
 
-    (tris, materials)
+    let mesh = Mesh::new(tris);
+    let objects = vec![HittableType::Mesh(mesh)];
+
+    (objects, materials)
 }

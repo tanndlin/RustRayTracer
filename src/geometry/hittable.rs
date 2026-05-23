@@ -1,5 +1,5 @@
 use crate::{
-    geometry::{bounds::Bounds, mesh::Mesh, sphere::Sphere},
+    geometry::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere},
     util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
@@ -12,6 +12,7 @@ pub trait Hittable {
 pub enum HittableType {
     Sphere(Sphere),
     Mesh(Mesh),
+    Instance(Instance),
 }
 
 impl Hittable for HittableType {
@@ -19,6 +20,7 @@ impl Hittable for HittableType {
         match self {
             HittableType::Sphere(sphere) => sphere.hit(ray, interval),
             HittableType::Mesh(mesh) => mesh.hit(ray, interval),
+            HittableType::Instance(instance) => instance.hit(ray, interval),
         }
     }
 
@@ -26,6 +28,7 @@ impl Hittable for HittableType {
         match self {
             HittableType::Sphere(sphere) => sphere.get_bounds(),
             HittableType::Mesh(mesh) => mesh.get_bounds(),
+            HittableType::Instance(instance) => instance.get_bounds(),
         }
     }
 
@@ -33,6 +36,7 @@ impl Hittable for HittableType {
         match self {
             HittableType::Sphere(sphere) => sphere.translate(vec),
             HittableType::Mesh(mesh) => mesh.translate(vec),
+            HittableType::Instance(instance) => instance.translate(vec),
         }
     }
 }

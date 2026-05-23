@@ -101,6 +101,7 @@ impl Camera {
 
     #[cfg(not(feature = "multithreading"))]
     fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
+        use indicatif::ProgressIterator;
         (0..num_tiles)
             .progress_with(make_progress_bar(num_tiles as u64))
             .map(|tile_index| self.render_tile(tile_index, objects))

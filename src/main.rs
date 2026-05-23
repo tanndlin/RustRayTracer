@@ -1,9 +1,10 @@
+use std::sync::Arc;
+
 use crate::camera::Camera;
-use crate::geometry::{
-    hittable::{Hittable, HittableType},
-    mesh::Mesh,
-    sphere::Sphere,
-};
+use crate::geometry::instance::Instance;
+use crate::geometry::{hittable::HittableType, sphere::Sphere};
+use crate::material::lambertian::LambertianBase;
+use crate::material::material_trait::MaterialType;
 use crate::util::{parser::glb::glb_parser::parse_glb, vec3::Vec3};
 
 mod camera;
@@ -12,18 +13,7 @@ mod material;
 mod util;
 
 fn main() {
-    let (tris, materials) = parse_glb("src/objs/Chess/Chess.glb");
-    return;
-
-    let mut mesh = Mesh::new(tris);
-    mesh.translate(&Vec3::new(0.0, -1.5, 0.0));
-
-    let mut objects: Vec<HittableType> = vec![HittableType::Mesh(mesh)];
-    objects.push(HittableType::Sphere(Sphere::new(
-        Vec3::new(5.0, 1.0, 0.0),
-        1.0,
-        0,
-    )));
+    let (objects, materials) = parse_glb("src/objs/Chess/Chess.glb");
 
     let camera = Camera::new(16.0 / 9.0, 1000, materials, true);
     println!("Rendering...");

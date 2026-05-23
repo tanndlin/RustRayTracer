@@ -3,18 +3,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GltfData {
-    asset: Asset,
-    scene: i64,
-    scenes: Vec<Scene>,
-    nodes: Vec<Node>,
-    materials: Vec<Material>,
-    meshes: Vec<Mesh>,
-    textures: Vec<TextureElement>,
-    images: Vec<Image>,
-    accessors: Vec<Accessor>,
-    buffer_views: Vec<BufferView>,
-    samplers: Vec<Sampler>,
-    buffers: Vec<Buffer>,
+    pub asset: Asset,
+    pub scene: i64,
+    pub scenes: Vec<Scene>,
+    pub nodes: Vec<Node>,
+    pub materials: Vec<Material>,
+    pub meshes: Vec<Mesh>,
+    pub textures: Vec<TextureElement>,
+    pub images: Vec<Image>,
+    pub accessors: Vec<Accessor>,
+    pub buffer_views: Vec<BufferView>,
+    pub samplers: Vec<Sampler>,
+    pub buffers: Vec<Buffer>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

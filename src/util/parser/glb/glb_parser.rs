@@ -1,15 +1,12 @@
 use std::io::Read;
 
 use crate::{
-    geometry::tri::Tri,
+    geometry::hittable::HittableType,
     material::material_trait::MaterialType,
-    util::parser::glb::{
-        gltf::GltfData,
-        types::{Chunk, ChunkType},
-    },
+    util::parser::glb::{gltf::GltfData, types::Chunk},
 };
 
-pub fn parse_glb(path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
+pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
     let mut buffer = vec![];
     std::fs::File::open(path)
         .expect("Failed to open .glb file")
@@ -46,7 +43,7 @@ pub fn parse_glb(path: &str) -> (Vec<Tri>, Vec<MaterialType>) {
         serde_json::from_str::<GltfData>(&json_str).expect("Failed to parse JSON chunk as GltfData")
     };
 
-    dbg!("Parsed GLTF data", gltf_data);
+    dbg!(gltf_data.asset);
 
     (vec![], vec![])
 }
@@ -55,15 +52,6 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
     let length = u32::from_le_bytes(buffer[offset..offset + 4].try_into().unwrap());
     let chunk_type = u32::from_le_bytes(buffer[offset + 4..offset + 8].try_into().unwrap()).into();
     let data = buffer[offset + 8..offset + 8 + length as usize].to_vec();
-
-    match chunk_type {
-        ChunkType::Json => {
-            let json_str = String::from_utf8_lossy(&data);
-            println!("Found JSON chunk with length {length} bytes");
-            println!("JSON content: {json_str}");
-        }
-        ChunkType::Binary => println!("Found Binary chunk with length {length} bytes"),
-    }
 
     Chunk {
         length,
