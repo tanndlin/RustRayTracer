@@ -5,9 +5,9 @@ pub struct GlbHeader {
 }
 
 pub struct Chunk {
-    length: u32,
-    chunk_type: ChunkType,
-    data: Vec<u8>,
+    pub length: u32,
+    pub chunk_type: ChunkType,
+    pub data: Vec<u8>,
 }
 
 pub enum ChunkType {
