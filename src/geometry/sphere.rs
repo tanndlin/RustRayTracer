@@ -3,6 +3,7 @@ use crate::{
     util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
 };
 
+#[derive(Debug)]
 pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,

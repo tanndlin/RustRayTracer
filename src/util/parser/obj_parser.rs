@@ -7,6 +7,7 @@ use crate::{
     util::{parser::mtl_parser::parse_mtl, vec3::Vec3},
 };
 
+#[allow(dead_code)]
 pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
     let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
     let mut vertices: Vec<Vec3> = vec![];

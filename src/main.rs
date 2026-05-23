@@ -1,11 +1,8 @@
-use std::sync::Arc;
-
-use crate::camera::Camera;
-use crate::geometry::instance::Instance;
-use crate::geometry::{hittable::HittableType, sphere::Sphere};
-use crate::material::lambertian::LambertianBase;
-use crate::material::material_trait::MaterialType;
-use crate::util::{parser::glb::glb_parser::parse_glb, vec3::Vec3};
+use crate::{
+    camera::Camera,
+    material::{lambertian::LambertianBase, material_trait::MaterialType},
+    util::{parser::glb::glb_parser::parse_glb, vec3::Color},
+};
 
 mod camera;
 mod geometry;
@@ -13,7 +10,16 @@ mod material;
 mod util;
 
 fn main() {
-    let (objects, materials) = parse_glb("src/objs/Chess/Chess.glb");
+    let (objects, mut materials) = parse_glb("src/objs/Chess/Chess.glb");
+
+    if materials.is_empty() {
+        materials.push(MaterialType::Lambertian(LambertianBase {
+            name: "Default".to_owned(),
+            albedo: Color::new(1.0, 1.0, 0.0),
+            roughness: 1.0,
+            alpha: 1.0,
+        }));
+    }
 
     let camera = Camera::new(16.0 / 9.0, 1000, materials, true);
     println!("Rendering...");

@@ -172,10 +172,20 @@ pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
     }
 }
 
-impl From<Vec<f64>> for Vec3 {
-    fn from(value: Vec<f64>) -> Self {
+impl From<&[f64]> for Vec3 {
+    fn from(value: &[f64]) -> Self {
         assert!(value.len() == 3, "Expected a 3D vector");
-        Vec3 {
+        Self {
+            x: value[0] as f32,
+            y: value[1] as f32,
+            z: value[2] as f32,
+        }
+    }
+}
+
+impl From<&[f64; 3]> for Vec3 {
+    fn from(value: &[f64; 3]) -> Self {
+        Self {
             x: value[0] as f32,
             y: value[1] as f32,
             z: value[2] as f32,

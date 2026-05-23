@@ -1,6 +1,6 @@
 use crate::{
     geometry::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere},
-    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
+    util::{hit_result::HitResult, interval::Interval, parser::glb::gltf, ray::Ray, vec3::Vec3},
 };
 
 pub trait Hittable {
@@ -9,6 +9,7 @@ pub trait Hittable {
     fn translate(&mut self, vec: &Vec3);
 }
 
+#[derive(Debug)]
 pub enum HittableType {
     Sphere(Sphere),
     Mesh(Mesh),
@@ -38,5 +39,15 @@ impl Hittable for HittableType {
             HittableType::Mesh(mesh) => mesh.translate(vec),
             HittableType::Instance(instance) => instance.translate(vec),
         }
+    }
+}
+
+impl HittableType {
+    pub fn from_gltf_mesh(
+        gltf_mesh: &gltf::Mesh,
+        gltf_data: &gltf::GltfData,
+        binary: &[u8],
+    ) -> Self {
+        HittableType::Mesh(Mesh::from_gltf_mesh(gltf_mesh, gltf_data, binary))
     }
 }

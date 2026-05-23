@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct GltfData {
     pub asset: Asset,
@@ -17,16 +17,50 @@ pub struct GltfData {
     pub buffers: Vec<Buffer>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Accessor {
-    buffer_view: i64,
-    component_type: i64,
-    count: i64,
-    max: Option<Vec<f64>>,
-    min: Option<Vec<f64>>,
+    pub buffer_view: i64,
+    pub component_type: ComponentType,
+    pub count: i64,
+    pub max: Option<Vec<f64>>,
+    pub min: Option<Vec<f64>>,
+    pub byte_offset: Option<i64>,
     #[serde(rename = "type")]
-    accessor_type: AccessorType,
+    pub accessor_type: AccessorType,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ComponentType {
+    Byte,
+    UnsignedByte,
+    Short,
+    UnsignedShort,
+    UnsignedInt,
+    Float,
+}
+
+impl TryFrom<i64> for ComponentType {
+    type Error = String;
+
+    fn try_from(value: i64) -> Result<Self, Self::Error> {
+        match value {
+            5120 => Ok(ComponentType::Byte),
+            5121 => Ok(ComponentType::UnsignedByte),
+            5122 => Ok(ComponentType::Short),
+            5123 => Ok(ComponentType::UnsignedShort),
+            5125 => Ok(ComponentType::UnsignedInt),
+            5126 => Ok(ComponentType::Float),
+            _ => Err(format!("Unknown component type: {}", value)),
+        }
+    }
+}
+
+impl<'de> Deserialize<'de> for ComponentType {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        let value = i64::deserialize(d)?;
+        ComponentType::try_from(value).map_err(serde::de::Error::custom)
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -37,6 +71,14 @@ pub enum AccessorType {
     Vec2,
     #[serde(rename = "VEC3")]
     Vec3,
+    #[serde(rename = "VEC4")]
+    Vec4,
+    #[serde(rename = "MAT2")]
+    Mat2,
+    #[serde(rename = "MAT3")]
+    Mat3,
+    #[serde(rename = "MAT4")]
+    Mat4,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -48,10 +90,10 @@ pub struct Asset {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BufferView {
-    buffer: i64,
-    byte_length: i64,
-    byte_offset: i64,
-    target: Option<i64>,
+    pub buffer: i64,
+    pub byte_length: i64,
+    pub byte_offset: i64,
+    pub target: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -101,24 +143,24 @@ pub struct Mesh {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Primitive {
     pub attributes: Attributes,
-    pub indices: i64,
+    pub indices: usize,
     pub material: Option<i64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Attributes {
-    position: i64,
-    normal: i64,
-    texcoord_0: i64,
+    pub position: usize,
+    normal: usize,
+    texcoord_0: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Node {
-    pub mesh: Option<i64>,
-    name: String,
-    rotation: Option<Vec<f64>>,
-    scale: Option<Vec<f64>>,
+    pub mesh: Option<usize>,
+    pub name: String,
+    pub rotation: Option<Vec<f64>>,
+    pub scale: Option<Vec<f64>>,
     pub translation: Option<Vec<f64>>,
 }
 

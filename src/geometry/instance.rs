@@ -6,24 +6,21 @@ use crate::{
         hittable::{Hittable, HittableType},
     },
     util::{
-        hit_result::HitResult,
-        interval::Interval,
-        parser::glb::gltf::{Mesh, Node},
-        ray::Ray,
-        vec3::Vec3,
+        hit_result::HitResult, interval::Interval, parser::glb::gltf::Node, ray::Ray, vec3::Vec3,
     },
 };
 
+#[derive(Debug)]
 pub struct Instance {
-    pub mesh_index: usize,
+    pub name: String,
     pub translation: Vec3,
     pub base: Arc<HittableType>,
 }
 
 impl Instance {
-    pub fn new(mesh_index: usize, translation: Vec3, base: Arc<HittableType>) -> Self {
+    pub fn new(name: String, translation: Vec3, base: Arc<HittableType>) -> Self {
         Self {
-            mesh_index,
+            name,
             translation,
             base,
         }
@@ -54,13 +51,18 @@ impl From<(&[Arc<HittableType>], Node)> for Instance {
         let (meshes, node) = value;
         let mesh_index = node
             .mesh
-            .expect("GLTF node must have a mesh to be instanced") as usize;
-        let translation = Vec3::from(node.translation.unwrap_or(vec![0.0, 0.0, 0.0]));
+            .expect("GLTF node must have a mesh to be instanced");
+        let translation = Vec3::from(
+            node.translation
+                .clone()
+                .unwrap_or(vec![0.0, 0.0, 0.0])
+                .as_slice(),
+        );
         let base = meshes
             .get(mesh_index)
             .expect("Mesh index out of bounds for GLTF node")
             .clone();
 
-        Self::new(mesh_index, translation, base)
+        Self::new(node.name, translation, base)
     }
 }

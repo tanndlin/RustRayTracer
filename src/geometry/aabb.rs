@@ -8,11 +8,13 @@ use crate::{
 
 const MIN_CHILDREN: usize = 8;
 
+#[derive(Debug)]
 pub enum AABBType<T> {
     Recursive(RecursiveAABB<T>),
     Leaf(Vec<T>),
 }
 
+#[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct AABB<T> {
     pub aabb_type: AABBType<T>,
@@ -123,6 +125,7 @@ impl<T: Hittable> Hittable for AABB<T> {
     }
 }
 
+#[derive(Debug)]
 pub struct RecursiveAABB<T> {
     pub left: Box<AABB<T>>,
     pub right: Box<AABB<T>>,

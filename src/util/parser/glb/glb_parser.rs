@@ -1,7 +1,7 @@
 use std::{io::Read, sync::Arc};
 
 use crate::{
-    geometry::hittable::HittableType,
+    geometry::{hittable::HittableType, instance::Instance},
     material::material_trait::MaterialType,
     util::parser::glb::{
         gltf::GltfData,
@@ -62,12 +62,21 @@ fn assemble_scene(
         .get(gltf_data.scene as usize)
         .expect("Scene index out of bounds");
 
-    let intance_bases = gltf_data
+    let instance_bases = gltf_data
         .meshes
         .iter()
-        .map(|mesh| Arc::new(HittableType::from(mesh)))
+        .map(|mesh| {
+            Arc::new(HittableType::from_gltf_mesh(
+                mesh,
+                &gltf_data,
+                &binary_chunk.data,
+            ))
+        })
         .collect::<Vec<_>>();
 
+    println!("Parsed {} meshes", instance_bases.len());
+
+    // Nodes are the instances of the meshes
     let nodes = scene
         .nodes
         .iter()
@@ -79,7 +88,22 @@ fn assemble_scene(
         })
         .collect::<Vec<_>>();
 
-    (vec![], vec![])
+    let instances: Vec<HittableType> = nodes
+        .iter()
+        .map(|node| HittableType::Instance((instance_bases.as_slice(), (*node).clone()).into()))
+        .collect();
+
+    dbg!(
+        instances
+            .iter()
+            .map(|i| match i {
+                HittableType::Instance(i) => &i.name,
+                _ => panic!(),
+            })
+            .collect::<Vec<_>>()
+    );
+
+    (instances, vec![])
 }
 
 fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {

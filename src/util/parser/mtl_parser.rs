@@ -1,5 +1,4 @@
 use crate::{
-    geometry::tri::Tri,
     material::{
         lambertian::LambertianBase,
         material_trait::{Material, MaterialType},
@@ -7,6 +6,7 @@ use crate::{
     util::vec3::{Color, Vec3},
 };
 
+#[allow(dead_code)]
 pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
     let file = std::fs::read_to_string(path).expect("Failed to read .mtl file");
 

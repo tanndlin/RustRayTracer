@@ -1,9 +1,8 @@
-use crate::util::parser::glb::gltf::{Accessor, AccessorType, GltfData};
+use crate::util::parser::glb::gltf::{Accessor, AccessorType, ComponentType, GltfData};
 
 impl Accessor {
     pub fn get_data(&self, gltf_data: &GltfData, binary: &[u8]) -> AccessorData {
         let buffer_view = &gltf_data.buffer_views[self.buffer_view as usize];
-        let buffer = &gltf_data.buffers[buffer_view.buffer as usize];
 
         let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
         let byte_length =
@@ -29,6 +28,7 @@ impl AccessorType {
     }
 }
 
+#[derive(Debug)]
 pub enum AccessorData {
     Scalar(Vec<f64>),
     Vec2(Vec<[f64; 2]>),
@@ -39,8 +39,8 @@ pub enum AccessorData {
     Mat4(Vec<[[f64; 4]; 4]>),
 }
 
-impl From<(&AccessorType, i64, &[u8])> for AccessorData {
-    fn from((accessor_type, component_type, data): (&AccessorType, i64, &[u8])) -> Self {
+impl From<(&AccessorType, ComponentType, &[u8])> for AccessorData {
+    fn from((accessor_type, component_type, data): (&AccessorType, ComponentType, &[u8])) -> Self {
         match accessor_type {
             AccessorType::Scalar => AccessorData::into_scalar(component_type, data),
             AccessorType::Vec2 => AccessorData::into_vec2(component_type, data),
@@ -54,7 +54,7 @@ impl From<(&AccessorType, i64, &[u8])> for AccessorData {
 }
 
 impl AccessorData {
-    fn into_scalar(component_type: i64, data: &[u8]) -> Self {
+    fn into_scalar(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Scalar(
             data.chunks(cs)
@@ -63,7 +63,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec2(component_type: i64, data: &[u8]) -> Self {
+    fn into_vec2(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec2(
             data.chunks(cs * 2)
@@ -72,7 +72,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec3(component_type: i64, data: &[u8]) -> Self {
+    fn into_vec3(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec3(
             data.chunks(cs * 3)
@@ -81,7 +81,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec4(component_type: i64, data: &[u8]) -> Self {
+    fn into_vec4(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec4(
             data.chunks(cs * 4)
@@ -90,7 +90,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat2(component_type: i64, data: &[u8]) -> Self {
+    fn into_mat2(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat2(
             data.chunks(cs * 4)
@@ -103,7 +103,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat3(component_type: i64, data: &[u8]) -> Self {
+    fn into_mat3(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat3(
             data.chunks(cs * 9)
@@ -116,7 +116,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat4(component_type: i64, data: &[u8]) -> Self {
+    fn into_mat4(component_type: ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat4(
             data.chunks(cs * 16)
@@ -130,27 +130,43 @@ impl AccessorData {
     }
 }
 
-fn component_size(n: i64) -> i64 {
-    match n {
-        5120 | 5121 => 1, // BYTE or UNSIGNED_BYTE
-        5122 | 5123 => 2, // SHORT or UNSIGNED_SHORT
-        5125 | 5126 => 4, // UNSIGNED_INT or FLOAT
-        _ => panic!("Unknown component type"),
+impl AccessorData {
+    pub fn len(&self) -> usize {
+        match self {
+            AccessorData::Scalar(items) => items.len(),
+            AccessorData::Vec2(items) => items.len(),
+            AccessorData::Vec3(items) => items.len(),
+            AccessorData::Vec4(items) => items.len(),
+            AccessorData::Mat2(items) => items.len(),
+            AccessorData::Mat3(items) => items.len(),
+            AccessorData::Mat4(items) => items.len(),
+        }
     }
 }
 
-fn read_component(component_type: i64, chunk: &[u8]) -> f64 {
+fn component_size(ct: ComponentType) -> i64 {
+    match ct {
+        ComponentType::Byte | ComponentType::UnsignedByte => 1,
+        ComponentType::Short | ComponentType::UnsignedShort => 2,
+        ComponentType::UnsignedInt | ComponentType::Float => 4,
+    }
+}
+
+fn read_component(component_type: ComponentType, chunk: &[u8]) -> f64 {
     match component_type {
-        5120 => i8::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        5121 => u8::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        5122 => i16::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        5123 => u16::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        5125 => u32::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        5126 => f32::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        _ => panic!("Unknown component type"),
+        ComponentType::Byte => i8::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::UnsignedByte => u8::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::Short => i16::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::UnsignedShort => u16::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::UnsignedInt => u32::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::Float => f32::from_le_bytes(chunk.try_into().unwrap()) as f64,
     }
 }
 
-fn read_components<const N: usize>(component_type: i64, cs: usize, chunk: &[u8]) -> [f64; N] {
+fn read_components<const N: usize>(
+    component_type: ComponentType,
+    cs: usize,
+    chunk: &[u8],
+) -> [f64; N] {
     std::array::from_fn(|i| read_component(component_type, &chunk[i * cs..(i + 1) * cs]))
 }
