@@ -88,6 +88,18 @@ impl ops::Add for Vec3 {
     }
 }
 
+impl ops::Add<&Vec3> for Vec3 {
+    type Output = Vec3;
+
+    fn add(self, other: &Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x + other.x,
+            y: self.y + other.y,
+            z: self.z + other.z,
+        }
+    }
+}
+
 impl ops::Sub for Vec3 {
     type Output = Vec3;
 
@@ -136,6 +148,18 @@ impl ops::Neg for Vec3 {
     }
 }
 
+impl ops::Div for Vec3 {
+    type Output = Vec3;
+
+    fn div(self, divisor: Vec3) -> Vec3 {
+        Vec3 {
+            x: self.x / divisor.x,
+            y: self.y / divisor.y,
+            z: self.z / divisor.z,
+        }
+    }
+}
+
 impl ops::Div<f32> for Vec3 {
     type Output = Vec3;
 
@@ -174,7 +198,11 @@ pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
 
 impl From<&[f64]> for Vec3 {
     fn from(value: &[f64]) -> Self {
-        assert!(value.len() == 3, "Expected a 3D vector");
+        assert!(
+            value.len() == 3,
+            "{}",
+            format!("Expected a 3D vector. Got: {:?}", value)
+        );
         Self {
             x: value[0] as f32,
             y: value[1] as f32,
@@ -190,6 +218,12 @@ impl From<&[f64; 3]> for Vec3 {
             y: value[1] as f32,
             z: value[2] as f32,
         }
+    }
+}
+
+impl From<Vec<f64>> for Vec3 {
+    fn from(value: Vec<f64>) -> Self {
+        value.as_slice().into()
     }
 }
 
