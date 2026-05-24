@@ -1,12 +1,12 @@
 use std::{io::Read, sync::Arc};
 
 use crate::{
-    geometry::{hittable::HittableType, instance::Instance},
+    geometry::hittable::HittableType,
     material::{lambertian::LambertianBase, material_trait::MaterialType},
     util::{
         parser::glb::{
             gltf::{GltfData, Material, MimeType},
-            types::{Chunk, ChunkType},
+            types::{Chunk, ChunkType, GlbHeader},
         },
         vec3::Color,
     },
@@ -19,17 +19,11 @@ pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         .read_to_end(&mut buffer)
         .expect("Failed to read .glb file");
 
-    let preamble = &buffer[0..12];
-    if preamble[0..4] != [0x67, 0x6C, 0x54, 0x46] {
-        panic!("Invalid GLB file: missing 'glTF' magic header");
-    }
-
-    let version = u32::from_le_bytes(preamble[4..8].try_into().unwrap());
+    let GlbHeader { version, length } = GlbHeader::from(&buffer[0..12].try_into().unwrap());
     if version != 2 {
         panic!("Unsupported GLB version: {}", version);
     }
 
-    let length = u32::from_le_bytes(preamble[8..12].try_into().unwrap());
     println!("Paring GLB version {version} file {path}. Size: {length} bytes");
 
     let mut chunks = vec![];

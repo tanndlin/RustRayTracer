@@ -16,6 +16,7 @@ use crate::{
 };
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Instance {
     pub name: String,
     pub translation: Option<Vec3>,

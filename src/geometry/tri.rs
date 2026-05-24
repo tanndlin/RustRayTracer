@@ -9,10 +9,11 @@ use crate::{
 };
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct Tri {
-    pub v0: Vec3,
-    pub v1: Vec3,
-    pub v2: Vec3,
+    v0: Vec3,
+    v1: Vec3,
+    v2: Vec3,
 
     pub normals: Option<(Vec3, Vec3, Vec3)>,
     pub uvs: Option<(Vec3, Vec3, Vec3)>,

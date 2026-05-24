@@ -1,7 +1,20 @@
 pub struct GlbHeader {
-    magic: [u8; 4],
-    version: u32,
-    length: u32,
+    pub version: u32,
+    pub length: u32,
+}
+
+impl From<&[u8; 12]> for GlbHeader {
+    fn from(buffer: &[u8; 12]) -> Self {
+        let preamble = &buffer[0..12];
+        if preamble[0..4] != [0x67, 0x6C, 0x54, 0x46] {
+            panic!("Invalid GLB file: missing 'glTF' magic header");
+        }
+
+        let version = u32::from_le_bytes(preamble[4..8].try_into().unwrap());
+        let length = u32::from_le_bytes(preamble[8..12].try_into().unwrap());
+
+        Self { version, length }
+    }
 }
 
 pub struct Chunk {

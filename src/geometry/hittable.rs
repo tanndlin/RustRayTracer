@@ -3,6 +3,7 @@ use crate::{
     util::{hit_result::HitResult, interval::Interval, parser::glb::gltf, ray::Ray, vec3::Vec3},
 };
 
+#[allow(dead_code)]
 pub trait Hittable {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult>;
     fn get_bounds(&self) -> &Bounds;
@@ -10,6 +11,7 @@ pub trait Hittable {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum HittableType {
     Sphere(Sphere),
     Mesh(Mesh),

@@ -12,6 +12,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
+    #[allow(dead_code)]
     pub fn new(center: Vec3, radius: f32, material_index: Option<usize>) -> Self {
         let r_vec = Vec3 {
             x: radius,

@@ -30,6 +30,7 @@ impl AccessorType {
 }
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum AccessorData {
     Scalar(Vec<f64>),
     Vec2(Vec<[f64; 2]>),
@@ -128,20 +129,6 @@ impl AccessorData {
                 })
                 .collect(),
         )
-    }
-}
-
-impl AccessorData {
-    pub fn len(&self) -> usize {
-        match self {
-            AccessorData::Scalar(items) => items.len(),
-            AccessorData::Vec2(items) => items.len(),
-            AccessorData::Vec3(items) => items.len(),
-            AccessorData::Vec4(items) => items.len(),
-            AccessorData::Mat2(items) => items.len(),
-            AccessorData::Mat3(items) => items.len(),
-            AccessorData::Mat4(items) => items.len(),
-        }
     }
 }
 
