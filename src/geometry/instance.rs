@@ -51,33 +51,30 @@ impl Hittable for Instance {
         if let Some(t) = self.translation {
             origin = origin - t;
         }
-        if let Some(s) = self.scale {
-            origin = origin / s;
-            dir = dir / s;
-        }
         if let Some(q) = self.rotation {
             let inv_q = quat_inverse(q);
             origin = quat_rotate(inv_q, origin);
             dir = quat_rotate(inv_q, dir);
         }
+        if let Some(s) = self.scale {
+            origin = origin / s;
+            dir = dir / s;
+        }
 
         let transformed_ray = Ray::new(origin, dir);
         let mut hit = self.base.hit(&transformed_ray, interval)?;
 
-        // Transform hit result back to world space
+        if let Some(s) = self.scale {
+            hit.point = hit.point * s;
+            hit.normal = (hit.normal / s).normalize();
+        }
         if let Some(q) = self.rotation {
             hit.point = quat_rotate(q, hit.point);
             hit.normal = quat_rotate(q, hit.normal);
         }
-        if let Some(s) = self.scale {
-            hit.point = hit.point * s;
-            // normals need inverse transpose for non-uniform scale
-            hit.normal = (hit.normal / s).normalize();
-        }
         if let Some(t) = self.translation {
             hit.point = hit.point + t;
         }
-
         Some(hit)
     }
 

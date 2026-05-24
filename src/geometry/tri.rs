@@ -65,9 +65,9 @@ impl Hittable for Tri {
         // Backface culling
         let determinant = -r.dir.dot(self.face_normal);
         // // TODO: Respect double_sided on the material
-        // if determinant < 1e-6 {
-        //     return None;
-        // }
+        if determinant.abs() < 1e-6 {
+            return None;
+        }
 
         let inv_det = 1.0 / determinant;
 
