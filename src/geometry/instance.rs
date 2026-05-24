@@ -11,7 +11,7 @@ use crate::{
         parser::glb::gltf::Node,
         quat::{quat_inverse, quat_rotate},
         ray::Ray,
-        vec3::Vec3,
+        vec3::{Vec3, max, min},
     },
 };
 
@@ -22,6 +22,7 @@ pub struct Instance {
     pub translation: Option<Vec3>,
     pub rotation: Option<[f32; 4]>,
     pub scale: Option<Vec3>,
+    bounds: Bounds, // World Space
     pub base: Arc<HittableType>,
 }
 
@@ -38,6 +39,7 @@ impl Instance {
             translation,
             rotation,
             scale,
+            bounds: Self::calc_bounds(&base, translation, rotation, scale),
             base,
         }
     }
@@ -45,6 +47,8 @@ impl Instance {
 
 impl Hittable for Instance {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
+        self.get_bounds().hit(ray, interval)?;
+
         let mut origin = ray.origin;
         let mut dir = ray.dir;
 
@@ -80,14 +84,16 @@ impl Hittable for Instance {
     }
 
     fn get_bounds(&self) -> &Bounds {
-        todo!()
+        &self.bounds
     }
 
     fn translate(&mut self, vec: &Vec3) {
         match self.translation {
             Some(t) => self.translation = Some(t + vec),
             None => self.translation = Some(*vec),
-        }
+        };
+
+        self.recompute_bounds();
     }
 }
 
@@ -111,5 +117,53 @@ impl From<(&[Arc<HittableType>], Node)> for Instance {
             .clone();
 
         Self::new(node.name, translation, rotation, scale, base)
+    }
+}
+
+impl Instance {
+    #[allow(dead_code)]
+    fn recompute_bounds(&mut self) {
+        self.bounds = Self::calc_bounds(&self.base, self.translation, self.rotation, self.scale);
+    }
+
+    fn calc_bounds(
+        base: &Arc<HittableType>,
+        translation: Option<Vec3>,
+        rotation: Option<[f32; 4]>,
+        scale: Option<Vec3>,
+    ) -> Bounds {
+        let bounds = base.get_bounds();
+
+        let corners = [
+            Vec3::new(bounds.min.x, bounds.min.y, bounds.min.z),
+            Vec3::new(bounds.max.x, bounds.min.y, bounds.min.z),
+            Vec3::new(bounds.min.x, bounds.max.y, bounds.min.z),
+            Vec3::new(bounds.min.x, bounds.min.y, bounds.max.z),
+            Vec3::new(bounds.max.x, bounds.max.y, bounds.min.z),
+            Vec3::new(bounds.max.x, bounds.min.y, bounds.max.z),
+            Vec3::new(bounds.min.x, bounds.max.y, bounds.max.z),
+            Vec3::new(bounds.max.x, bounds.max.y, bounds.max.z),
+        ];
+
+        let transformed: Vec<Vec3> = corners
+            .iter()
+            .map(|&c| {
+                let mut p = c;
+                if let Some(s) = scale {
+                    p = p * s;
+                }
+                if let Some(q) = rotation {
+                    p = quat_rotate(q, p);
+                }
+                if let Some(t) = translation {
+                    p = p + t;
+                }
+                p
+            })
+            .collect();
+
+        let min = transformed.iter().copied().reduce(min).unwrap();
+        let max = transformed.iter().copied().reduce(max).unwrap();
+        Bounds { min, max }
     }
 }
