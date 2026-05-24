@@ -107,7 +107,7 @@ pub struct Buffer {
 pub struct Image {
     pub buffer_view: usize,
     pub mime_type: MimeType,
-    name: String,
+    pub name: String,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -170,8 +170,8 @@ pub struct Primitive {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Attributes {
     pub position: usize,
-    normal: usize,
-    texcoord_0: usize,
+    pub normal: usize,
+    pub texcoord_0: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

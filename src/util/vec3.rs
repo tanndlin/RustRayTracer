@@ -221,6 +221,16 @@ impl From<&[f64; 3]> for Vec3 {
     }
 }
 
+impl From<&[f64; 2]> for Vec3 {
+    fn from(value: &[f64; 2]) -> Self {
+        Self {
+            x: value[0] as f32,
+            y: value[1] as f32,
+            z: 0.0,
+        }
+    }
+}
+
 impl From<Vec<f64>> for Vec3 {
     fn from(value: Vec<f64>) -> Self {
         value.as_slice().into()

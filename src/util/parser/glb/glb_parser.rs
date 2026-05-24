@@ -96,16 +96,6 @@ fn assemble_scene(
         .map(|node| HittableType::Instance((instance_bases.as_slice(), (*node).clone()).into()))
         .collect();
 
-    dbg!(
-        instances
-            .iter()
-            .map(|i| match i {
-                HittableType::Instance(i) => &i.name,
-                _ => panic!(),
-            })
-            .collect::<Vec<_>>()
-    );
-
     let mut materials = vec![];
     for mat in gltf_data.materials {
         let Material {
@@ -115,8 +105,11 @@ fn assemble_scene(
             ..
         } = mat;
 
+        dbg!(&name);
+
         let material = match pbr.base_color_texture {
             Some(tex) => {
+                println!("Is image");
                 let texture = gltf_data.textures.get(tex.index).unwrap();
                 let image = gltf_data.images.get(texture.source).unwrap();
                 let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
@@ -135,6 +128,9 @@ fn assemble_scene(
                     }
                 };
 
+                let (width, height) = image.dimensions();
+                dbg!(&width, &height);
+
                 let pixels = image
                     .into_raw()
                     .chunks(4)
@@ -145,6 +141,7 @@ fn assemble_scene(
                         Color::new(r, g, b)
                     })
                     .collect::<Vec<_>>();
+
                 MaterialType::TextureLambertian(LambertianBase {
                     name,
                     albedo: pixels,
@@ -153,6 +150,7 @@ fn assemble_scene(
                 })
             }
             None => {
+                println!("Is albedo");
                 let rgba = pbr.base_color_factor.unwrap();
                 MaterialType::Lambertian(LambertianBase {
                     name,
