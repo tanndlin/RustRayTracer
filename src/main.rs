@@ -1,8 +1,4 @@
-use crate::{
-    camera::Camera,
-    material::{lambertian::LambertianBase, material_trait::MaterialType},
-    util::{parser::glb::glb_parser::parse_glb, vec3::Color},
-};
+use crate::{camera::Camera, util::parser::glb::glb_parser::parse_glb};
 
 mod camera;
 mod geometry;
@@ -10,16 +6,7 @@ mod material;
 mod util;
 
 fn main() {
-    let (objects, mut materials) = parse_glb("src/objs/Chess/Chess.glb");
-
-    if materials.is_empty() {
-        materials.push(MaterialType::Lambertian(LambertianBase {
-            name: "Default".to_owned(),
-            albedo: Color::new(1.0, 1.0, 0.0),
-            roughness: 1.0,
-            alpha: 1.0,
-        }));
-    }
+    let (objects, materials) = parse_glb("src/objs/Chess/Chess.glb");
 
     let camera = Camera::new(16.0 / 9.0, 1000, materials, true);
     println!("Rendering...");

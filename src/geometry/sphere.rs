@@ -8,11 +8,11 @@ pub struct Sphere {
     pub center: Vec3,
     pub radius: f32,
     bounds: Bounds,
-    pub material_index: usize,
+    pub material_index: Option<usize>,
 }
 
 impl Sphere {
-    pub fn new(center: Vec3, radius: f32, material_index: usize) -> Self {
+    pub fn new(center: Vec3, radius: f32, material_index: Option<usize>) -> Self {
         let r_vec = Vec3 {
             x: radius,
             y: radius,

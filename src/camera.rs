@@ -6,7 +6,10 @@ const SAMPLES_PER_PIXEL: u32 = 10;
 
 use crate::{
     geometry::hittable::{Hittable, HittableType},
-    material::material_trait::{Material, MaterialType},
+    material::{
+        lambertian::LambertianBase,
+        material_trait::{Material, MaterialType},
+    },
     util::{
         hit_result::HitResult,
         interval::Interval,
@@ -21,6 +24,7 @@ pub struct Camera {
     pub image_height: u32,
     look_from: Vec3,
     materials: Vec<MaterialType>,
+    default_material: MaterialType,
     pixel_delta_u: Vec3,
     pixel_delta_v: Vec3,
     pixel00_loc: Vec3,
@@ -66,6 +70,13 @@ impl Camera {
 
         let total_pixels = image_width * image_height;
 
+        let default_material = MaterialType::Lambertian(LambertianBase {
+            name: "Default".to_owned(),
+            albedo: Color::new(1.0, 0.0, 1.0),
+            roughness: 1.0,
+            alpha: 1.0,
+        });
+
         Camera {
             image_width,
             image_height,
@@ -76,6 +87,7 @@ impl Camera {
             pixel_delta_v,
             total_pixels,
             use_background_gradient,
+            default_material,
         }
     }
 
@@ -149,7 +161,10 @@ impl Camera {
             }
 
             if let Some(hit) = hit_result {
-                let material = &self.materials[hit.material_index];
+                let material = match hit.material_index {
+                    Some(mat_index) => &self.materials[mat_index],
+                    None => &self.default_material,
+                };
                 if matches!(material, MaterialType::Emissive(_)) {
                     return attenuation * material.scatter(&ray, &hit).1;
                 }

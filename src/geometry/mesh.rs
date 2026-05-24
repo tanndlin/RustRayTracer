@@ -47,7 +47,7 @@ impl Mesh {
                 let b = (&positions[tri[1] as usize]).into();
                 let c = (&positions[tri[2] as usize]).into();
 
-                let tri = Tri::new(a, b, c, None, None, 0); // TODO: Material
+                let tri = Tri::new(a, b, c, None, None, primitive.material);
                 children.push(tri);
             });
         }

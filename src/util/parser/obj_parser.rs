@@ -128,7 +128,7 @@ pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                     v[2],
                     normals,
                     uvs,
-                    current_material_index,
+                    Some(current_material_index),
                 ));
             }
 

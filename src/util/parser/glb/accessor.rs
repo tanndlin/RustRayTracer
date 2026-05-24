@@ -5,17 +5,18 @@ impl Accessor {
         let buffer_view = &gltf_data.buffer_views[self.buffer_view as usize];
 
         let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
-        let byte_length =
-            self.count * self.accessor_type.component_count() * component_size(self.component_type);
+        let byte_length = self.count
+            * self.accessor_type.component_count() as usize
+            * component_size(self.component_type) as usize;
 
-        let data = &binary[byte_offset as usize..(byte_offset + byte_length) as usize];
+        let data = &binary[byte_offset..(byte_offset + byte_length)];
 
         AccessorData::from((&self.accessor_type, self.component_type, data))
     }
 }
 
 impl AccessorType {
-    fn component_count(&self) -> i64 {
+    fn component_count(&self) -> u8 {
         match self {
             AccessorType::Scalar => 1,
             AccessorType::Vec2 => 2,
@@ -144,7 +145,7 @@ impl AccessorData {
     }
 }
 
-fn component_size(ct: ComponentType) -> i64 {
+fn component_size(ct: ComponentType) -> u8 {
     match ct {
         ComponentType::Byte | ComponentType::UnsignedByte => 1,
         ComponentType::Short | ComponentType::UnsignedShort => 2,

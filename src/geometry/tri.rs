@@ -21,7 +21,7 @@ pub struct Tri {
     edge_ac: Vec3,
     bounds: Bounds,
 
-    material_index: usize,
+    material_index: Option<usize>,
 }
 
 impl Tri {
@@ -32,7 +32,7 @@ impl Tri {
         normals: Option<(Vec3, Vec3, Vec3)>,
         uvs: Option<(Vec3, Vec3, Vec3)>,
 
-        material_index: usize,
+        material_index: Option<usize>,
     ) -> Self {
         let edge_ab = v1 - v0;
         let edge_ac = v2 - v0;

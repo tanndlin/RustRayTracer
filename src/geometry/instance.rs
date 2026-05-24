@@ -86,7 +86,6 @@ impl Hittable for Instance {
     }
 
     fn translate(&mut self, vec: &Vec3) {
-        // self.translation = self.translation + *vec;
         match self.translation {
             Some(t) => self.translation = Some(t + vec),
             None => self.translation = Some(*vec),

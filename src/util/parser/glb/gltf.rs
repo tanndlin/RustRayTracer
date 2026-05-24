@@ -22,10 +22,10 @@ pub struct GltfData {
 pub struct Accessor {
     pub buffer_view: i64,
     pub component_type: ComponentType,
-    pub count: i64,
+    pub count: usize,
     pub max: Option<Vec<f64>>,
     pub min: Option<Vec<f64>>,
-    pub byte_offset: Option<i64>,
+    pub byte_offset: Option<usize>,
     #[serde(rename = "type")]
     pub accessor_type: AccessorType,
 }
@@ -90,10 +90,10 @@ pub struct Asset {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BufferView {
-    pub buffer: i64,
-    pub byte_length: i64,
-    pub byte_offset: i64,
-    pub target: Option<i64>,
+    pub buffer: usize,
+    pub byte_length: usize,
+    pub byte_offset: usize,
+    pub target: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -102,36 +102,55 @@ pub struct Buffer {
     byte_length: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
-    buffer_view: i64,
-    mime_type: String,
+    pub buffer_view: usize,
+    pub mime_type: MimeType,
     name: String,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum MimeType {
+    ImagePng,
+    ImageJpeg,
+}
+
+impl<'de> Deserialize<'de> for MimeType {
+    fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
+        match String::deserialize(d)?.as_str() {
+            "image/png" => Ok(MimeType::ImagePng),
+            "image/jpeg" => Ok(MimeType::ImageJpeg),
+            other => Err(serde::de::Error::custom(format!(
+                "Unknown mime type: {}",
+                other
+            ))),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Material {
     double_sided: bool,
-    name: String,
-    normal_texture: Option<Texture>,
-    pbr_metallic_roughness: PbrMetallicRoughness,
+    pub name: String,
+    pub normal_texture: Option<Texture>,
+    pub pbr_metallic_roughness: PbrMetallicRoughness,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Texture {
-    index: i64,
+    pub index: usize,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PbrMetallicRoughness {
-    base_color_texture: Option<Texture>,
+    pub base_color_texture: Option<Texture>,
     metallic_factor: i64,
     metallic_roughness_texture: Option<Texture>,
-    base_color_factor: Option<Vec<f64>>,
-    roughness_factor: Option<f64>,
+    pub base_color_factor: Option<Vec<f64>>,
+    pub roughness_factor: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -144,7 +163,7 @@ pub struct Mesh {
 pub struct Primitive {
     pub attributes: Attributes,
     pub indices: usize,
-    pub material: Option<i64>,
+    pub material: Option<usize>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -179,6 +198,6 @@ pub struct Scene {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct TextureElement {
-    sampler: i64,
-    source: i64,
+    pub sampler: usize,
+    pub source: usize, // image index
 }
