@@ -2,7 +2,6 @@ use std::f32::consts::PI;
 
 const MAX_BOUNCES: u32 = 10;
 const TILE_SIZE: u32 = 16;
-const SAMPLES_PER_PIXEL: u32 = 10;
 
 use crate::{
     geometry::hittable::{Hittable, HittableType},
@@ -22,6 +21,7 @@ use crate::{
 pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
+    samples_per_pixel: u32,
     look_from: Vec3,
     materials: Vec<MaterialType>,
     default_material: MaterialType,
@@ -36,6 +36,7 @@ impl Camera {
     pub fn new(
         aspect_ratio: f32,
         image_width: u32,
+        samples_per_pixel: u32,
         materials: Vec<MaterialType>,
         use_background_gradient: bool,
     ) -> Self {
@@ -81,6 +82,7 @@ impl Camera {
         Camera {
             image_width,
             image_height,
+            samples_per_pixel,
             look_from,
             materials,
             pixel00_loc,
@@ -133,10 +135,10 @@ impl Camera {
             let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
 
             let mut color = Vec3::zero();
-            for _ in 0..SAMPLES_PER_PIXEL {
+            for _ in 0..self.samples_per_pixel {
                 color = color + self.ray_color(&ray, objects);
             }
-            tile_buffer.push(color / SAMPLES_PER_PIXEL as f32);
+            tile_buffer.push(color / self.samples_per_pixel as f32);
         }
         tile_buffer
     }

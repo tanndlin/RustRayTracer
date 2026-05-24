@@ -1,3 +1,5 @@
+use clap::Parser;
+
 use crate::{camera::Camera, util::parser::glb::glb_parser::parse_glb};
 
 mod camera;
@@ -5,10 +7,19 @@ mod geometry;
 mod material;
 mod util;
 
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct Args {
+    #[arg(short, long, default_value = "10")]
+    pub samples: u32,
+}
+
 fn main() {
+    let args = Args::parse();
+
     let (objects, materials) = parse_glb("src/objs/Chess/Chess.glb");
 
-    let camera = Camera::new(16.0 / 9.0, 1000, materials, true);
+    let camera = Camera::new(16.0 / 9.0, 1000, args.samples, materials, true);
     println!("Rendering...");
 
     let start = std::time::Instant::now();
