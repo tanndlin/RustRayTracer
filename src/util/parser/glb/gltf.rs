@@ -171,6 +171,7 @@ pub struct Primitive {
 pub struct Attributes {
     pub position: usize,
     pub normal: usize,
+    pub tangent: Option<usize>,
     pub texcoord_0: usize,
 }
 

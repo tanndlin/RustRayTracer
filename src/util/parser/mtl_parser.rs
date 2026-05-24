@@ -27,6 +27,7 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                 materials.push(MaterialType::Lambertian(LambertianBase {
                     name,
                     albedo: Vec3::new(0.8, 0.8, 0.8),
+                    normal_texture: None,
                     roughness: 1.0,
                     alpha: 1.0,
                 }));

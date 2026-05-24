@@ -16,6 +16,7 @@ pub struct Tri {
 
     pub normals: Option<(Vec3, Vec3, Vec3)>,
     pub uvs: Option<(Vec3, Vec3, Vec3)>,
+    tangents: Option<[[f32; 4]; 3]>,
     face_normal: Vec3,
     edge_ab: Vec3,
     edge_ac: Vec3,
@@ -31,7 +32,7 @@ impl Tri {
         v2: Vec3,
         normals: Option<(Vec3, Vec3, Vec3)>,
         uvs: Option<(Vec3, Vec3, Vec3)>,
-
+        tangents: Option<[[f32; 4]; 3]>,
         material_index: Option<usize>,
     ) -> Self {
         let edge_ab = v1 - v0;
@@ -42,12 +43,23 @@ impl Tri {
             max: max(v0, max(v1, v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
         };
 
+        let tangents = if tangents.is_none()
+            && let Some(uvs) = uvs
+        {
+            // Tangent is same for all vertices since its a flat face
+            let t = compute_tangent(v0, v1, v2, uvs.0, uvs.1, uvs.2);
+            Some([t, t, t])
+        } else {
+            None
+        };
+
         Tri {
             v0,
             v1,
             v2,
             normals,
             uvs,
+            tangents,
             face_normal,
             edge_ab,
             edge_ac,
@@ -114,8 +126,28 @@ impl Hittable for Tri {
             (0.0, 0.0)
         };
 
+        let tangent = if let Some(tangents) = self.tangents {
+            let t0 = tangents[0];
+            let t1 = tangents[1];
+            let t2 = tangents[2];
+
+            let w = 1.0 - u - v;
+            let t = Vec3::new(
+                t0[0] * w + t1[0] * u + t2[0] * v,
+                t0[1] * w + t1[1] * u + t2[1] * v,
+                t0[2] * w + t1[2] * u + t2[2] * v,
+            )
+            .normalize();
+            let handedness = t0[3]; // W should be constant across the triangle
+            let bitangent = cross(n, t) * handedness;
+            Some((t, bitangent))
+        } else {
+            None
+        };
+
         Some(HitResult {
             normal: n,
+            tangent,
             t: dst,
             point,
             u,
@@ -133,4 +165,22 @@ impl Hittable for Tri {
         self.v1 = self.v1 + *vec;
         self.v2 = self.v2 + *vec;
     }
+}
+
+fn compute_tangent(v0: Vec3, v1: Vec3, v2: Vec3, uv0: Vec3, uv1: Vec3, uv2: Vec3) -> [f32; 4] {
+    let edge1 = v1 - v0;
+    let edge2 = v2 - v0;
+    let duv1 = uv1 - uv0;
+    let duv2 = uv2 - uv0;
+
+    let f = 1.0 / (duv1.x * duv2.y - duv2.x * duv1.y);
+
+    let tangent = Vec3::new(
+        f * (duv2.y * edge1.x - duv1.y * edge2.x),
+        f * (duv2.y * edge1.y - duv1.y * edge2.y),
+        f * (duv2.y * edge1.z - duv1.y * edge2.z),
+    )
+    .normalize();
+
+    [tangent.x, tangent.y, tangent.z, 1.0] // handedness 1.0, compute properly if needed
 }

@@ -17,6 +17,7 @@ pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
     let mut materials = vec![MaterialType::Lambertian(LambertianBase {
         name: "default".to_string(),
         albedo: Vec3::new(1.0, 0.0, 1.0),
+        normal_texture: None,
         roughness: 1.0,
         alpha: 1.0,
     })];
@@ -128,6 +129,7 @@ pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                     v[2],
                     normals,
                     uvs,
+                    None,
                     Some(current_material_index),
                 ));
             }

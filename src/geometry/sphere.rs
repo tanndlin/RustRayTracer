@@ -61,6 +61,7 @@ impl Hittable for Sphere {
 
         Some(HitResult {
             normal,
+            tangent: None, // TODO
             t,
             point,
             u,

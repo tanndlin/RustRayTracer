@@ -73,6 +73,7 @@ impl Camera {
         let default_material = MaterialType::Lambertian(LambertianBase {
             name: "Default".to_owned(),
             albedo: Color::new(1.0, 0.0, 1.0),
+            normal_texture: None,
             roughness: 1.0,
             alpha: 1.0,
         });

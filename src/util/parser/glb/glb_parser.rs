@@ -57,7 +57,7 @@ pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
 }
 
 fn assemble_scene(
-    gltf_data: GltfData,
+    mut gltf_data: GltfData,
     binary_chunk: &Chunk,
 ) -> (Vec<HittableType>, Vec<MaterialType>) {
     let scene = gltf_data
@@ -97,7 +97,8 @@ fn assemble_scene(
         .collect();
 
     let mut materials = vec![];
-    for mat in gltf_data.materials {
+    let materials_data = std::mem::take(&mut gltf_data.materials);
+    for mat in materials_data {
         let Material {
             name,
             normal_texture,
@@ -105,49 +106,23 @@ fn assemble_scene(
             ..
         } = mat;
 
+        let normal_texture =
+            normal_texture.map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
+
         let material = match pbr.base_color_texture {
-            Some(tex) => {
-                let texture = gltf_data.textures.get(tex.index).unwrap();
-                let image = gltf_data.images.get(texture.source).unwrap();
-                let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
-                let data = &binary_chunk.data
-                    [buffer_view.byte_offset..buffer_view.byte_offset + buffer_view.byte_length];
-                let image = match image.mime_type {
-                    MimeType::ImagePng => {
-                        image::load_from_memory_with_format(data, image::ImageFormat::Png)
-                            .expect("Failed to load PNG texture")
-                            .to_rgba8()
-                    }
-                    MimeType::ImageJpeg => {
-                        image::load_from_memory_with_format(data, image::ImageFormat::Jpeg)
-                            .expect("Failed to load JPEG texture")
-                            .to_rgba8()
-                    }
-                };
-
-                let pixels = image
-                    .into_raw()
-                    .chunks(4)
-                    .map(|rgba| {
-                        let r = rgba[0] as f32 / 255.0;
-                        let g = rgba[1] as f32 / 255.0;
-                        let b = rgba[2] as f32 / 255.0;
-                        Color::new(r, g, b)
-                    })
-                    .collect::<Vec<_>>();
-
-                MaterialType::TextureLambertian(LambertianBase {
-                    name,
-                    albedo: pixels,
-                    roughness: 1.0,
-                    alpha: 1.0, // TODO Support alpha channel
-                })
-            }
+            Some(tex) => MaterialType::TextureLambertian(LambertianBase {
+                name,
+                albedo: load_texture(&binary_chunk.data, &gltf_data, tex.index),
+                normal_texture,
+                roughness: 1.0,
+                alpha: 1.0,
+            }),
             None => {
                 let rgba = pbr.base_color_factor.unwrap();
                 MaterialType::Lambertian(LambertianBase {
                     name,
                     albedo: rgba[..3].into(),
+                    normal_texture,
                     roughness: 1.0,
                     alpha: rgba[3] as f32,
                 })
@@ -170,4 +145,32 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
         chunk_type,
         data,
     }
+}
+
+fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Vec<Color> {
+    let texture = gltf_data.textures.get(tex_index).unwrap();
+    let image = gltf_data.images.get(texture.source).unwrap();
+    let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
+    let data = &binary[buffer_view.byte_offset..buffer_view.byte_offset + buffer_view.byte_length];
+
+    let image = match image.mime_type {
+        MimeType::ImagePng => image::load_from_memory_with_format(data, image::ImageFormat::Png)
+            .expect("Failed to load PNG texture")
+            .to_rgba8(),
+        MimeType::ImageJpeg => image::load_from_memory_with_format(data, image::ImageFormat::Jpeg)
+            .expect("Failed to load JPEG texture")
+            .to_rgba8(),
+    };
+
+    image
+        .into_raw()
+        .chunks(4)
+        .map(|rgba| {
+            Color::new(
+                rgba[0] as f32 / 255.0,
+                rgba[1] as f32 / 255.0,
+                rgba[2] as f32 / 255.0,
+            )
+        })
+        .collect()
 }

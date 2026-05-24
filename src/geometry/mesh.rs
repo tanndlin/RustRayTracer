@@ -45,6 +45,22 @@ impl Mesh {
                 _ => panic!("expected Vec3"),
             };
 
+            let tangents = match primitive.attributes.tangent {
+                Some(tan_index) => {
+                    let tangent_accessor = gltf_data.accessors.get(tan_index).unwrap();
+                    let tangents: Vec<[f32; 4]> = match tangent_accessor.get_data(gltf_data, binary)
+                    {
+                        AccessorData::Vec4(v) => {
+                            v.into_iter().map(|i| i.map(|z| z as f32)).collect()
+                        }
+                        _ => panic!("expected Vec4"),
+                    };
+
+                    Some(tangents)
+                }
+                None => None,
+            };
+
             let uv_accessor = gltf_data
                 .accessors
                 .get(primitive.attributes.texcoord_0)
@@ -64,17 +80,28 @@ impl Mesh {
                 let a = positions[tri[0]].into();
                 let b = positions[tri[1]].into();
                 let c = positions[tri[2]].into();
+
                 let uva = uvs[tri[0]].into();
                 let uvb = uvs[tri[1]].into();
                 let uvc = uvs[tri[2]].into();
+                let uvs = Some((uva, uvb, uvc));
+
                 let na = normals[tri[0]].into();
                 let nb = normals[tri[1]].into();
                 let nc = normals[tri[2]].into();
-
                 let normals = Some((na, nb, nc));
-                let uvs = Some((uva, uvb, uvc));
 
-                let tri = Tri::new(a, b, c, normals, uvs, primitive.material);
+                let tan = match &tangents {
+                    Some(t) => {
+                        let ta = t[tri[0]];
+                        let tb = t[tri[1]];
+                        let tc = t[tri[2]];
+                        Some([ta, tb, tc])
+                    }
+                    None => None,
+                };
+
+                let tri = Tri::new(a, b, c, normals, uvs, tan, primitive.material);
                 children.push(tri);
             });
         }

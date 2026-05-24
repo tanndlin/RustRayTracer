@@ -22,8 +22,9 @@ impl Albedo for Color {
 impl Albedo for Vec<Color> {
     fn sample(&self, hit: &HitResult) -> Color {
         let width = (self.len() as f32).sqrt() as usize;
+        let height = self.len() / width;
         let x = (hit.u * width as f32) as usize % width;
-        let y = (hit.v * width as f32) as usize % width;
+        let y = (hit.v * height as f32) as usize % height;
         self[y * width + x]
     }
 }
@@ -32,6 +33,7 @@ impl Albedo for Vec<Color> {
 pub struct LambertianBase<T> {
     pub name: String,
     pub albedo: T,
+    pub normal_texture: Option<Vec<Vec3>>,
     pub roughness: f32,
     pub alpha: f32,
 }
@@ -52,7 +54,27 @@ impl<T: Albedo + Sync + Send> Material for LambertianBase<T> {
             }
         }
 
-        let mut scatter_direction = ray.dir.reflect(hit.normal).normalize();
+        // Sample normal map and transform to world space
+        let shading_normal = if let Some(normal_map) = &self.normal_texture
+            && let Some((t, b)) = hit.tangent
+        {
+            // Sample the normal map (RGB → XYZ in tangent space)
+            let sampled = normal_map.sample(hit); // gives [0,1] RGB
+            let tangent_normal = Vec3::new(
+                sampled.x * 2.0 - 1.0,
+                sampled.y * 2.0 - 1.0,
+                sampled.z * 2.0 - 1.0,
+            )
+            .normalize();
+
+            // Transform from tangent space to world space using TBN
+            let n = hit.normal;
+            (t * tangent_normal.x + b * tangent_normal.y + n * tangent_normal.z).normalize()
+        } else {
+            hit.normal
+        };
+
+        let mut scatter_direction = ray.dir.reflect(shading_normal).normalize();
         if self.roughness > 0.0 {
             loop {
                 scatter_direction = (scatter_direction
@@ -78,6 +100,7 @@ impl From<LambertianBase<Color>> for LambertianBase<Vec<Color>> {
         Self {
             name: base.name,
             albedo: pixels,
+            normal_texture: None,
             roughness: base.roughness,
             alpha: base.alpha,
         }
