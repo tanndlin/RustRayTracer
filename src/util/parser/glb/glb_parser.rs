@@ -105,11 +105,8 @@ fn assemble_scene(
             ..
         } = mat;
 
-        dbg!(&name);
-
         let material = match pbr.base_color_texture {
             Some(tex) => {
-                println!("Is image");
                 let texture = gltf_data.textures.get(tex.index).unwrap();
                 let image = gltf_data.images.get(texture.source).unwrap();
                 let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
@@ -127,9 +124,6 @@ fn assemble_scene(
                             .to_rgba8()
                     }
                 };
-
-                let (width, height) = image.dimensions();
-                dbg!(&width, &height);
 
                 let pixels = image
                     .into_raw()
@@ -150,7 +144,6 @@ fn assemble_scene(
                 })
             }
             None => {
-                println!("Is albedo");
                 let rgba = pbr.base_color_factor.unwrap();
                 MaterialType::Lambertian(LambertianBase {
                     name,

@@ -64,9 +64,10 @@ impl Hittable for Tri {
 
         // Backface culling
         let determinant = -r.dir.dot(self.face_normal);
-        if determinant < 1e-6 {
-            return None;
-        }
+        // // TODO: Respect double_sided on the material
+        // if determinant < 1e-6 {
+        //     return None;
+        // }
 
         let inv_det = 1.0 / determinant;
 
@@ -98,6 +99,10 @@ impl Hittable for Tri {
         let mut n = interpolated_normal.normalize();
         if !n.is_finite() || n.length_squared() < 1e-6 {
             n = self.face_normal.normalize(); // fallback
+        }
+
+        if determinant < 0.0 {
+            n = -n;
         }
 
         let point = r.at(dst);

@@ -132,7 +132,7 @@ impl<'de> Deserialize<'de> for MimeType {
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Material {
-    double_sided: bool,
+    pub double_sided: bool,
     pub name: String,
     pub normal_texture: Option<Texture>,
     pub pbr_metallic_roughness: PbrMetallicRoughness,

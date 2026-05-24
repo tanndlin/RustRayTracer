@@ -36,6 +36,15 @@ impl Mesh {
                 _ => panic!("expected Vec3"),
             };
 
+            let normal_accessor = gltf_data
+                .accessors
+                .get(primitive.attributes.normal)
+                .unwrap();
+            let normals = match normal_accessor.get_data(gltf_data, binary) {
+                AccessorData::Vec3(v) => v,
+                _ => panic!("expected Vec3"),
+            };
+
             let uv_accessor = gltf_data
                 .accessors
                 .get(primitive.attributes.texcoord_0)
@@ -52,16 +61,20 @@ impl Mesh {
             };
 
             indices.chunks(3).for_each(|tri| {
-                let a = (&positions[tri[0]]).into();
-                let b = (&positions[tri[1]]).into();
-                let c = (&positions[tri[2]]).into();
-                let uva = (&uvs[tri[0]]).into();
-                let uvb = (&uvs[tri[1]]).into();
-                let uvc = (&uvs[tri[2]]).into();
+                let a = positions[tri[0]].into();
+                let b = positions[tri[1]].into();
+                let c = positions[tri[2]].into();
+                let uva = uvs[tri[0]].into();
+                let uvb = uvs[tri[1]].into();
+                let uvc = uvs[tri[2]].into();
+                let na = normals[tri[0]].into();
+                let nb = normals[tri[1]].into();
+                let nc = normals[tri[2]].into();
 
+                let normals = Some((na, nb, nc));
                 let uvs = Some((uva, uvb, uvc));
 
-                let tri = Tri::new(a, b, c, None, uvs, primitive.material);
+                let tri = Tri::new(a, b, c, normals, uvs, primitive.material);
                 children.push(tri);
             });
         }
