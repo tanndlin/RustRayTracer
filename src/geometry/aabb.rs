@@ -3,18 +3,24 @@ use crate::{
         bounds::{Axis, Bounds},
         hittable::Hittable,
     },
-    util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},
+    util::{
+        hit_result::HitResult,
+        interval::Interval,
+        quat::{from_axis_angle, quat_rotate},
+        ray::Ray,
+        vec3::Vec3,
+    },
 };
 
 const MIN_CHILDREN: usize = 8;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum AABBType<T> {
     Recursive(RecursiveAABB<T>),
     Leaf(Vec<T>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(clippy::upper_case_acronyms)]
 pub struct AABB<T> {
     pub aabb_type: AABBType<T>,
@@ -140,9 +146,27 @@ impl<T: Hittable> Hittable for AABB<T> {
             }
         }
     }
+
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
+        let quat = from_axis_angle(*axis, angle_rad);
+        self.bounds.min = quat_rotate(quat, self.bounds.min);
+        self.bounds.max = quat_rotate(quat, self.bounds.max);
+
+        match &mut self.aabb_type {
+            AABBType::Recursive(c) => {
+                c.left.rotate(axis, angle_rad);
+                c.right.rotate(axis, angle_rad);
+            }
+            AABBType::Leaf(children) => {
+                for child in children {
+                    child.rotate(axis, angle_rad);
+                }
+            }
+        }
+    }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct RecursiveAABB<T> {
     pub left: Box<AABB<T>>,
     pub right: Box<AABB<T>>,

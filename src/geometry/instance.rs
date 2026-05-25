@@ -9,7 +9,7 @@ use crate::{
         hit_result::HitResult,
         interval::Interval,
         parser::glb::gltf::Node,
-        quat::quat_rotate,
+        quat::{from_axis_angle, quat_multiply, quat_rotate},
         ray::Ray,
         vec3::{Vec3, max, min},
     },
@@ -96,6 +96,16 @@ impl Hittable for Instance {
 
     fn scale(&mut self, vec: &Vec3) {
         self.scale = self.scale * *vec;
+        self.recompute_bounds();
+    }
+
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
+        let rot = from_axis_angle(*axis, angle_rad);
+        self.rotation = match self.rotation {
+            Some(r) => Some(quat_multiply(rot, r)),
+            None => Some(rot),
+        };
+
         self.recompute_bounds();
     }
 }

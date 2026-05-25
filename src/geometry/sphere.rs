@@ -83,4 +83,8 @@ impl Hittable for Sphere {
     fn scale(&mut self, _vec: &Vec3) {
         todo!()
     }
+
+    fn rotate(&mut self, _axis: &Vec3, _angle_rad: f32) {
+        todo!()
+    }
 }

@@ -3,12 +3,13 @@ use crate::{
     util::{
         hit_result::HitResult,
         interval::Interval,
+        quat::quat_rotate,
         ray::Ray,
         vec3::{Vec3, cross, max, min},
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Tri {
     v0: Vec3,
@@ -67,6 +68,16 @@ impl Tri {
             bounds,
             material_index,
         }
+    }
+
+    fn recompute_derived(&mut self) {
+        self.edge_ab = self.v1 - self.v0;
+        self.edge_ac = self.v2 - self.v0;
+        self.face_normal = cross(self.edge_ab, self.edge_ac);
+        self.bounds = Bounds {
+            min: min(self.v0, min(self.v1, self.v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
+            max: max(self.v0, max(self.v1, self.v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
+        };
     }
 }
 
@@ -175,14 +186,16 @@ impl Hittable for Tri {
         self.v1 = self.v1 * *s;
         self.v2 = self.v2 * *s;
 
-        // Recompute derived data
-        self.edge_ab = self.v1 - self.v0;
-        self.edge_ac = self.v2 - self.v0;
-        self.face_normal = cross(self.edge_ab, self.edge_ac);
-        self.bounds = Bounds {
-            min: min(self.v0, min(self.v1, self.v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
-            max: max(self.v0, max(self.v1, self.v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
-        };
+        self.recompute_derived();
+    }
+
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
+        let quat = crate::util::quat::from_axis_angle(*axis, angle_rad);
+        self.v0 = quat_rotate(quat, self.v0);
+        self.v1 = quat_rotate(quat, self.v1);
+        self.v2 = quat_rotate(quat, self.v2);
+
+        self.recompute_derived();
     }
 }
 

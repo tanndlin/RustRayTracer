@@ -26,6 +26,10 @@ impl Vec3 {
         self.x * self.x + self.y * self.y + self.z * self.z
     }
 
+    pub fn length(&self) -> f32 {
+        self.length_squared().sqrt()
+    }
+
     pub fn normalize(&self) -> Vec3 {
         let len = self.length_squared().sqrt();
         match len > 1e-8 {

@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Mesh {
     pub aabb: AABB<Tri>,
 }
@@ -138,5 +138,9 @@ impl Hittable for Mesh {
 
     fn scale(&mut self, vec: &Vec3) {
         self.aabb.scale(vec);
+    }
+
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
+        self.aabb.rotate(axis, angle_rad);
     }
 }

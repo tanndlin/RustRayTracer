@@ -9,6 +9,7 @@ pub trait Hittable {
     fn get_bounds(&self) -> &Bounds;
     fn translate(&mut self, vec: &Vec3);
     fn scale(&mut self, vec: &Vec3);
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32);
 }
 
 #[derive(Debug)]
@@ -49,6 +50,14 @@ impl Hittable for HittableType {
             HittableType::Sphere(sphere) => sphere.scale(vec),
             HittableType::Mesh(mesh) => mesh.scale(vec),
             HittableType::Instance(instance) => instance.scale(vec),
+        }
+    }
+
+    fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
+        match self {
+            HittableType::Sphere(sphere) => sphere.rotate(axis, angle_rad),
+            HittableType::Mesh(mesh) => mesh.rotate(axis, angle_rad),
+            HittableType::Instance(instance) => instance.rotate(axis, angle_rad),
         }
     }
 }
