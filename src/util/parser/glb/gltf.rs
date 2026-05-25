@@ -129,14 +129,34 @@ impl<'de> Deserialize<'de> for MimeType {
         }
     }
 }
+#[derive(Deserialize, Debug, Default)]
+pub struct MaterialExtensions {
+    #[serde(rename = "KHR_materials_transmission")]
+    pub transmission: Option<MaterialsTransmission>,
+    #[serde(rename = "KHR_materials_ior")]
+    pub ior: Option<MaterialsIor>,
+}
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct MaterialsTransmission {
+    pub transmission_factor: f64,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct MaterialsIor {
+    pub ior: f64,
+}
+
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Material {
-    pub double_sided: bool,
     pub name: String,
+    pub double_sided: Option<bool>,
     pub normal_texture: Option<Texture>,
-    pub pbr_metallic_roughness: PbrMetallicRoughness,
+    pub pbr_metallic_roughness: Option<PbrMetallicRoughness>,
+    #[serde(default)]
+    pub extensions: MaterialExtensions,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -144,11 +164,11 @@ pub struct Texture {
     pub index: usize,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct PbrMetallicRoughness {
     pub base_color_texture: Option<Texture>,
-    metallic_factor: i64,
+    metallic_factor: Option<usize>,
     metallic_roughness_texture: Option<Texture>,
     pub base_color_factor: Option<Vec<f64>>,
     pub roughness_factor: Option<f64>,

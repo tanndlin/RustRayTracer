@@ -17,7 +17,7 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    let (objects, materials) = parse_glb("src/objs/Chess/Chess.glb");
+    let (objects, materials) = parse_glb("src/objs/F16/F16Shaded.glb");
 
     let camera = Camera::new(16.0 / 9.0, 1000, args.samples, materials, true);
     println!("Rendering...");

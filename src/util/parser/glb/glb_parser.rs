@@ -2,7 +2,7 @@ use std::{io::Read, sync::Arc};
 
 use crate::{
     geometry::hittable::HittableType,
-    material::{lambertian::LambertianBase, material_trait::MaterialType},
+    material::{dielectric::Dielectric, lambertian::LambertianBase, material_trait::MaterialType},
     util::{
         parser::glb::{
             gltf::{GltfData, Material, MimeType},
@@ -40,7 +40,12 @@ pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
             .first()
             .expect("GLB file must contain at least one chunk");
         let json_str = String::from_utf8_lossy(&json_chunk.data);
-        serde_json::from_str::<GltfData>(&json_str).expect("Failed to parse JSON chunk as GltfData")
+        serde_json::from_str::<GltfData>(&json_str).unwrap_or_else(|_| {
+            panic!(
+                "{}",
+                format!("Failed to parse JSON chunk as GltfData. Got {json_str}").to_string()
+            )
+        })
     };
     let binary_chunk = chunks
         .iter()
@@ -100,26 +105,45 @@ fn assemble_scene(
             ..
         } = mat;
 
+        let pbr = pbr.unwrap();
+
         let normal_texture =
             normal_texture.map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
 
-        let material = match pbr.base_color_texture {
-            Some(tex) => MaterialType::TextureLambertian(LambertianBase {
-                name,
-                albedo: load_texture(&binary_chunk.data, &gltf_data, tex.index),
-                normal_texture,
-                roughness: 1.0,
-                alpha: 1.0,
-            }),
-            None => {
-                let rgba = pbr.base_color_factor.unwrap();
-                MaterialType::Lambertian(LambertianBase {
+        let material = {
+            // Is glass
+            if let Some(transmission_factor) =
+                mat.extensions.transmission.map(|t| t.transmission_factor)
+            {
+                let ior = mat.extensions.ior.map(|i| i.ior).unwrap_or(1.5);
+                let albedo = pbr.base_color_factor.unwrap_or(vec![1.0, 1.0, 1.0, 1.0]);
+                MaterialType::Dielectric(Dielectric::new(
                     name,
-                    albedo: rgba[..3].into(),
-                    normal_texture,
-                    roughness: 1.0,
-                    alpha: rgba[3] as f32,
-                })
+                    Some(albedo[..3].into()),
+                    ior as f32,
+                    transmission_factor as f32,
+                ))
+            } else {
+                // Is lambertian
+                match pbr.base_color_texture {
+                    Some(tex) => MaterialType::TextureLambertian(LambertianBase {
+                        name,
+                        albedo: load_texture(&binary_chunk.data, &gltf_data, tex.index),
+                        normal_texture,
+                        roughness: 1.0,
+                        alpha: 1.0,
+                    }),
+                    None => {
+                        let rgba = pbr.base_color_factor.unwrap();
+                        MaterialType::Lambertian(LambertianBase {
+                            name,
+                            albedo: rgba[..3].into(),
+                            normal_texture,
+                            roughness: 1.0,
+                            alpha: rgba[3] as f32,
+                        })
+                    }
+                }
             }
         };
 

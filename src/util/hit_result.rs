@@ -8,4 +8,5 @@ pub struct HitResult {
     pub material_index: Option<usize>,
     pub u: f32,
     pub v: f32,
+    pub front_face: bool,
 }

@@ -1,5 +1,5 @@
 use crate::{
-    material::{emissive::Emissive, lambertian::LambertianBase},
+    material::{dielectric::Dielectric, emissive::Emissive, lambertian::LambertianBase},
     util::{hit_result::HitResult, ray::Ray, vec3::Color},
 };
 
@@ -13,6 +13,7 @@ pub enum MaterialType {
     Lambertian(LambertianBase<Color>),
     TextureLambertian(LambertianBase<Vec<Color>>),
     Emissive(Emissive),
+    Dielectric(Dielectric),
 }
 
 impl Material for MaterialType {
@@ -21,6 +22,7 @@ impl Material for MaterialType {
             MaterialType::Lambertian(mat) => mat.scatter(ray, hit_record),
             MaterialType::TextureLambertian(mat) => mat.scatter(ray, hit_record),
             MaterialType::Emissive(mat) => mat.scatter(ray, hit_record),
+            MaterialType::Dielectric(mat) => mat.scatter(ray, hit_record),
         }
     }
 
@@ -29,6 +31,7 @@ impl Material for MaterialType {
             MaterialType::Lambertian(mat) => mat.get_name(),
             MaterialType::TextureLambertian(mat) => mat.get_name(),
             MaterialType::Emissive(mat) => mat.get_name(),
+            MaterialType::Dielectric(mat) => mat.get_name(),
         }
     }
 }

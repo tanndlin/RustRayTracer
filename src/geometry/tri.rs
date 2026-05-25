@@ -82,6 +82,8 @@ impl Hittable for Tri {
             return None;
         }
 
+        let is_frontface = determinant > 0.0;
+
         let inv_det = 1.0 / determinant;
 
         // Calculate dst to triangle
@@ -154,6 +156,7 @@ impl Hittable for Tri {
             u,
             v,
             material_index: self.material_index,
+            front_face: is_frontface,
         })
     }
 

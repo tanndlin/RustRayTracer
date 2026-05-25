@@ -68,6 +68,7 @@ impl Hittable for Sphere {
             u,
             v,
             material_index: self.material_index,
+            front_face: ray.dir.dot(normal) < 0.0,
         })
     }
 

@@ -86,7 +86,9 @@ impl<T: Albedo + Sync + Send> Material for LambertianBase<T> {
             }
         }
 
-        let scattered = Ray::new(hit.point, scatter_direction);
+        // Remove shadow acne
+        let origin = hit.point + hit.normal * 1e-4;
+        let scattered = Ray::new(origin, scatter_direction);
         (scattered, self.albedo.sample(hit))
     }
 
