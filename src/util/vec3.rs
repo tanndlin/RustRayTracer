@@ -257,4 +257,14 @@ impl From<Vec<f64>> for Vec3 {
     }
 }
 
+impl From<f64> for Vec3 {
+    fn from(value: f64) -> Self {
+        Self {
+            x: value as f32,
+            y: value as f32,
+            z: value as f32,
+        }
+    }
+}
+
 pub type Color = Vec3;

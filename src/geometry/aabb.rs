@@ -123,6 +123,23 @@ impl<T: Hittable> Hittable for AABB<T> {
             }
         }
     }
+
+    fn scale(&mut self, vec: &Vec3) {
+        self.bounds.min = self.bounds.min * *vec;
+        self.bounds.max = self.bounds.max * *vec;
+
+        match &mut self.aabb_type {
+            AABBType::Recursive(c) => {
+                c.left.scale(vec);
+                c.right.scale(vec);
+            }
+            AABBType::Leaf(children) => {
+                for child in children {
+                    child.scale(vec);
+                }
+            }
+        }
+    }
 }
 
 #[derive(Debug)]

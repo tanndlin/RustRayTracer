@@ -8,6 +8,7 @@ pub trait Hittable {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult>;
     fn get_bounds(&self) -> &Bounds;
     fn translate(&mut self, vec: &Vec3);
+    fn scale(&mut self, vec: &Vec3);
 }
 
 #[derive(Debug)]
@@ -42,6 +43,14 @@ impl Hittable for HittableType {
             HittableType::Instance(instance) => instance.translate(vec),
         }
     }
+
+    fn scale(&mut self, vec: &Vec3) {
+        match self {
+            HittableType::Sphere(sphere) => sphere.scale(vec),
+            HittableType::Mesh(mesh) => mesh.scale(vec),
+            HittableType::Instance(instance) => instance.scale(vec),
+        }
+    }
 }
 
 impl HittableType {
@@ -49,7 +58,10 @@ impl HittableType {
         gltf_mesh: &gltf::Mesh,
         gltf_data: &gltf::GltfData,
         binary: &[u8],
+        mat_offset: usize,
     ) -> Self {
-        HittableType::Mesh(Mesh::from_gltf_mesh(gltf_mesh, gltf_data, binary))
+        HittableType::Mesh(Mesh::from_gltf_mesh(
+            gltf_mesh, gltf_data, binary, mat_offset,
+        ))
     }
 }

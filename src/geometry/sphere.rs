@@ -79,4 +79,8 @@ impl Hittable for Sphere {
     fn translate(&mut self, vec: &Vec3) {
         self.center = self.center + *vec;
     }
+
+    fn scale(&mut self, _vec: &Vec3) {
+        todo!()
+    }
 }

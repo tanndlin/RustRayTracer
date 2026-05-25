@@ -42,10 +42,15 @@ impl Camera {
     ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
-        let look_from = Vec3::new(30.0, 50.0, 65.0);
-        let look_at = Vec3::new(10.0, 25.0, 0.0);
+        let look_from = Vec3::new(-3.0, 0.5, -2.0);
+        let look_at = Vec3::new(0.0, 0.0, 0.0);
         let up = Vec3::new(0.0, 1.0, 0.0);
         let fov = 55;
+
+        // let look_from = Vec3::new(-50.0, 25.0, -2.0);
+        // let look_at = Vec3::new(0.0, 0.0, 0.0);
+        // let up = Vec3::new(0.0, 1.0, 0.0);
+        // let fov = 10;
 
         let theta = degrees_to_radians(fov);
         let h = f32::tan(theta / 2.0);

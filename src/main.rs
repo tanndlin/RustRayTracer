@@ -1,6 +1,10 @@
 use clap::Parser;
 
-use crate::{camera::Camera, util::parser::glb::glb_parser::parse_glb};
+use crate::{
+    camera::Camera,
+    geometry::hittable::{Hittable, HittableType},
+    util::{parser::glb::glb_parser::parse_glb, vec3::Vec3},
+};
 
 mod camera;
 mod geometry;
@@ -17,7 +21,13 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    let (objects, materials) = parse_glb("src/objs/F16/F16Shaded.glb");
+    let (mut objects, mut materials) = parse_glb("src/objs/F16/F16Shaded.glb", 0);
+    let (chess_objects, chess_materials) = parse_glb("src/objs/Chess/Chess.glb", materials.len());
+    objects.extend(chess_objects);
+    materials.extend(chess_materials);
+
+    objects[0].scale(&Vec3::from(0.1));
+    objects[0].translate(&Vec3::new(5.0, 0.0, 0.0));
 
     let camera = Camera::new(16.0 / 9.0, 1000, args.samples, materials, true);
     println!("Rendering...");

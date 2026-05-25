@@ -12,7 +12,7 @@ use crate::{
     },
 };
 
-pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
+pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<MaterialType>) {
     let mut buffer = vec![];
     std::fs::File::open(path)
         .expect("Failed to open .glb file")
@@ -52,12 +52,13 @@ pub fn parse_glb(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         .find(|chunk| matches!(chunk.chunk_type, ChunkType::Binary))
         .expect("GLB file must contain a binary chunk");
 
-    assemble_scene(gltf_data, binary_chunk)
+    assemble_scene(gltf_data, binary_chunk, mat_offset)
 }
 
 fn assemble_scene(
     mut gltf_data: GltfData,
     binary_chunk: &Chunk,
+    mat_offset: usize,
 ) -> (Vec<HittableType>, Vec<MaterialType>) {
     let scene = gltf_data
         .scenes
@@ -72,6 +73,7 @@ fn assemble_scene(
                 mesh,
                 &gltf_data,
                 &binary_chunk.data,
+                mat_offset,
             ))
         })
         .collect::<Vec<_>>();

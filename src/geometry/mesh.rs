@@ -23,7 +23,12 @@ impl Mesh {
         Mesh { aabb }
     }
 
-    pub fn from_gltf_mesh(gltf_mesh: &gltf::Mesh, gltf_data: &GltfData, binary: &[u8]) -> Self {
+    pub fn from_gltf_mesh(
+        gltf_mesh: &gltf::Mesh,
+        gltf_data: &GltfData,
+        binary: &[u8],
+        mat_offset: usize,
+    ) -> Self {
         let mut children = Vec::new();
 
         for primitive in &gltf_mesh.primitives {
@@ -101,7 +106,15 @@ impl Mesh {
                     None => None,
                 };
 
-                let tri = Tri::new(a, b, c, normals, uvs, tan, primitive.material);
+                let tri = Tri::new(
+                    a,
+                    b,
+                    c,
+                    normals,
+                    uvs,
+                    tan,
+                    primitive.material.map(|m| m + mat_offset),
+                );
                 children.push(tri);
             });
         }
@@ -121,5 +134,9 @@ impl Hittable for Mesh {
 
     fn translate(&mut self, vec: &Vec3) {
         self.aabb.translate(vec);
+    }
+
+    fn scale(&mut self, vec: &Vec3) {
+        self.aabb.scale(vec);
     }
 }

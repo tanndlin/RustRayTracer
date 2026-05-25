@@ -21,9 +21,9 @@ pub struct Instance {
     pub name: String,
     pub translation: Option<Vec3>,
     pub rotation: Option<[f32; 4]>,
-    pub scale: Option<Vec3>,
-    world_to_object: [[f64; 4]; 4], // inverse TRS
-    object_to_world: [[f64; 4]; 4], // TRS
+    pub scale: Vec3,
+    pub world_to_object: [[f64; 4]; 4], // inverse TRS
+    pub object_to_world: [[f64; 4]; 4], // TRS
     normal_matrix: [[f64; 4]; 4],
     bounds: Bounds, // World Space
     pub base: Arc<HittableType>,
@@ -37,6 +37,7 @@ impl Instance {
         scale: Option<Vec3>,
         base: Arc<HittableType>,
     ) -> Self {
+        let scale = scale.unwrap_or(Vec3::from(1.0));
         let object_to_world = trs_matrix(translation, rotation, scale);
         let world_to_object = mat4_inverse(object_to_world);
         let normal_matrix = mat3_inverse_transpose(object_to_world);
@@ -60,10 +61,20 @@ impl Hittable for Instance {
         self.get_bounds().hit(ray, interval)?;
 
         let origin = mat4_transform_point(self.world_to_object, ray.origin);
-        let dir = mat4_transform_dir(self.world_to_object, ray.dir);
+        let dir_transformed = mat4_transform_dir(self.world_to_object, ray.dir);
+        let dir_length = dir_transformed.length();
+        let dir = dir_transformed / dir_length;
 
         let transformed_ray = Ray::new(origin, dir);
-        let mut hit = self.base.hit(&transformed_ray, interval)?;
+        let transformed_interval = Interval {
+            min: interval.min * dir_length,
+            max: interval.max * dir_length,
+        };
+
+        let mut hit = self.base.hit(&transformed_ray, &transformed_interval)?;
+
+        // t is in object space with normalized dir, scale back to world space
+        hit.t /= dir_length;
 
         hit.point = mat4_transform_point(self.object_to_world, hit.point);
         hit.normal = mat4_transform_dir(self.normal_matrix, hit.normal).normalize();
@@ -80,6 +91,11 @@ impl Hittable for Instance {
             None => self.translation = Some(*vec),
         };
 
+        self.recompute_bounds();
+    }
+
+    fn scale(&mut self, vec: &Vec3) {
+        self.scale = self.scale * *vec;
         self.recompute_bounds();
     }
 }
@@ -121,7 +137,7 @@ impl Instance {
         base: &Arc<HittableType>,
         translation: Option<Vec3>,
         rotation: Option<[f32; 4]>,
-        scale: Option<Vec3>,
+        scale: Vec3,
     ) -> Bounds {
         let bounds = base.get_bounds();
 
@@ -140,9 +156,7 @@ impl Instance {
             .iter()
             .map(|&c| {
                 let mut p = c;
-                if let Some(s) = scale {
-                    p = p * s;
-                }
+                p = p * scale;
                 if let Some(q) = rotation {
                     p = quat_rotate(q, p);
                 }
@@ -159,11 +173,7 @@ impl Instance {
     }
 }
 
-fn trs_matrix(
-    translation: Option<Vec3>,
-    rotation: Option<[f32; 4]>,
-    scale: Option<Vec3>,
-) -> [[f64; 4]; 4] {
+fn trs_matrix(translation: Option<Vec3>, rotation: Option<[f32; 4]>, scale: Vec3) -> [[f64; 4]; 4] {
     // Start with identity
     let mut m = [
         [1.0, 0.0, 0.0, 0.0],
@@ -173,11 +183,9 @@ fn trs_matrix(
     ];
 
     // Scale
-    if let Some(s) = scale {
-        m[0][0] = s.x as f64;
-        m[1][1] = s.y as f64;
-        m[2][2] = s.z as f64;
-    }
+    m[0][0] = scale.x as f64;
+    m[1][1] = scale.y as f64;
+    m[2][2] = scale.z as f64;
 
     // Rotation (quaternion to matrix, applied after scale)
     if let Some([qx, qy, qz, qw]) = rotation {
