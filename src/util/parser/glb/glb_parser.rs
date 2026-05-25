@@ -38,6 +38,9 @@ pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<Mater
             .first()
             .expect("GLB file must contain at least one chunk");
         let json_str = String::from_utf8_lossy(&json_chunk.data);
+        // Write the json to a file for debugging
+        std::fs::write(format!("debug_gltf_{mat_offset}.json"), &*json_str)
+            .expect("Failed to write debug_gltf.json");
         serde_json::from_str::<GltfData>(&json_str).unwrap_or_else(|_| {
             panic!(
                 "{}",
@@ -114,6 +117,14 @@ fn assemble_scene(
         let normal_texture =
             normal_texture.map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
 
+        let roughness_texture = pbr
+            .metallic_roughness_texture
+            .map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
+        // collect per-pixel roughness values if a roughness texture exists
+        let roughness = roughness_texture
+            .as_ref()
+            .map(|pixels| pixels.iter().map(|rgb| rgb.y).collect::<Vec<f32>>());
+
         let material = {
             // Is glass
             if let Some(transmission_factor) =
@@ -130,11 +141,19 @@ fn assemble_scene(
             } else {
                 // Is lambertian
                 if let Some(tex) = pbr.base_color_texture {
+                    let albedo = load_texture(&binary_chunk.data, &gltf_data, tex.index);
+                    let roughness = roughness.unwrap_or(
+                        albedo
+                            .iter()
+                            .map(|_| pbr.roughness_factor.map_or(0.8, |r| r as f32))
+                            .collect(),
+                    );
+
                     MaterialType::TextureLambertian(LambertianBase {
                         name,
-                        albedo: load_texture(&binary_chunk.data, &gltf_data, tex.index),
+                        albedo,
                         normal_texture,
-                        roughness: 1.0,
+                        roughness,
                         alpha: 1.0,
                     })
                 } else {
@@ -143,7 +162,7 @@ fn assemble_scene(
                         name,
                         albedo: rgba[..3].into(),
                         normal_texture,
-                        roughness: 1.0,
+                        roughness: pbr.roughness_factor.unwrap() as f32,
                         alpha: rgba[3] as f32,
                     })
                 }

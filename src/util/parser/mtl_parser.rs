@@ -73,7 +73,7 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                 {
                     match last {
                         MaterialType::Lambertian(mat) => {
-                            let mut new_mat = LambertianBase::<Vec<Color>>::from(mat);
+                            let mut new_mat = LambertianBase::<Vec<Color>, Vec<f32>>::from(mat);
                             new_mat.name = name;
                             new_mat.albedo = pixels;
                             materials.push(MaterialType::TextureLambertian(new_mat));

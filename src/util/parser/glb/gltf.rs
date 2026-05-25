@@ -168,14 +168,14 @@ pub struct Texture {
 pub struct PbrMetallicRoughness {
     pub base_color_texture: Option<Texture>,
     metallic_factor: Option<usize>,
-    metallic_roughness_texture: Option<Texture>,
+    pub metallic_roughness_texture: Option<Texture>,
     pub base_color_factor: Option<Vec<f64>>,
     pub roughness_factor: Option<f64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Mesh {
-    name: String,
+    pub name: String,
     pub primitives: Vec<Primitive>,
 }
 

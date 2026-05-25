@@ -42,7 +42,7 @@ impl Camera {
     ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
-        let look_from = Vec3::new(-3.0, 0.5, -2.0);
+        let look_from = Vec3::new(-5.0, 2.0, -2.0);
         let look_at = Vec3::new(0.0, 0.0, 0.0);
         let up = Vec3::new(0.0, 1.0, 0.0);
         let fov = 55;

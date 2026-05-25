@@ -2,3 +2,4 @@
 *.png
 *.svg
 profile.json.gz
+debug_gltf_*.json
