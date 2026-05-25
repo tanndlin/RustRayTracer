@@ -6,12 +6,12 @@ impl Accessor {
 
         let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
         let byte_length = self.count
-            * self.accessor_type.component_count() as usize
+            * self.r#type.component_count() as usize
             * component_size(self.component_type) as usize;
 
         let data = &binary[byte_offset..(byte_offset + byte_length)];
 
-        AccessorData::from((&self.accessor_type, self.component_type, data))
+        AccessorData::from((&self.r#type, self.component_type, data))
     }
 }
 
@@ -21,8 +21,7 @@ impl AccessorType {
             AccessorType::Scalar => 1,
             AccessorType::Vec2 => 2,
             AccessorType::Vec3 => 3,
-            AccessorType::Vec4 => 4,
-            AccessorType::Mat2 => 4,
+            AccessorType::Vec4 | AccessorType::Mat2 => 4,
             AccessorType::Mat3 => 9,
             AccessorType::Mat4 => 16,
         }
@@ -142,12 +141,12 @@ fn component_size(ct: ComponentType) -> u8 {
 
 fn read_component(component_type: ComponentType, chunk: &[u8]) -> f64 {
     match component_type {
-        ComponentType::Byte => i8::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        ComponentType::UnsignedByte => u8::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        ComponentType::Short => i16::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        ComponentType::UnsignedShort => u16::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        ComponentType::UnsignedInt => u32::from_le_bytes(chunk.try_into().unwrap()) as f64,
-        ComponentType::Float => f32::from_le_bytes(chunk.try_into().unwrap()) as f64,
+        ComponentType::Byte => f64::from(i8::from_le_bytes(chunk.try_into().unwrap())),
+        ComponentType::UnsignedByte => f64::from(u8::from_le_bytes(chunk.try_into().unwrap())),
+        ComponentType::Short => f64::from(i16::from_le_bytes(chunk.try_into().unwrap())),
+        ComponentType::UnsignedShort => f64::from(u16::from_le_bytes(chunk.try_into().unwrap())),
+        ComponentType::UnsignedInt => f64::from(u32::from_le_bytes(chunk.try_into().unwrap())),
+        ComponentType::Float => f64::from(f32::from_le_bytes(chunk.try_into().unwrap())),
     }
 }
 

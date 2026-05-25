@@ -90,12 +90,12 @@ impl Camera {
             samples_per_pixel,
             look_from,
             materials,
-            pixel00_loc,
+            default_material,
             pixel_delta_u,
             pixel_delta_v,
+            pixel00_loc,
             total_pixels,
             use_background_gradient,
-            default_material,
         }
     }
 
@@ -114,7 +114,7 @@ impl Camera {
         use rayon::prelude::*;
         (0..num_tiles)
             .into_par_iter()
-            .progress_with(make_progress_bar(num_tiles as u64))
+            .progress_with(make_progress_bar(u64::from(num_tiles)))
             .map(|tile_index| self.render_tile(tile_index, objects))
             .collect()
     }
@@ -199,5 +199,5 @@ impl Camera {
 }
 
 fn degrees_to_radians(fov: u8) -> f32 {
-    fov as f32 / 180.0 * PI
+    f32::from(fov) / 180.0 * PI
 }

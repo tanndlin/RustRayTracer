@@ -1,3 +1,5 @@
+#![allow(clippy::similar_names, clippy::many_single_char_names)]
+
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{

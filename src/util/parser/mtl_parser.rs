@@ -21,7 +21,7 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
 
         match parts[0] {
             "newmtl" => {
-                let name = parts.get(1).unwrap_or(&"default").to_string();
+                let name = (*parts.get(1).unwrap_or(&"default")).to_string();
                 cur_material_name = Some(name.clone());
                 // Push a default material for now; we'll update it when we get more info
                 materials.push(MaterialType::Lambertian(LambertianBase {
@@ -54,16 +54,16 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                     .parent()
                     .unwrap_or(std::path::Path::new(""))
                     .join(file_name);
-                println!("Loading texture: {:?}", file_name);
+                println!("Loading texture: {}", file_name.display());
                 let pixels: Vec<Color> = image::open(file_name)
                     .expect("Failed to open texture file")
                     .to_rgb8()
                     .pixels()
                     .map(|p| {
                         Color::new(
-                            p[0] as f32 / 255.0,
-                            p[1] as f32 / 255.0,
-                            p[2] as f32 / 255.0,
+                            f32::from(p[0]) / 255.0,
+                            f32::from(p[1]) / 255.0,
+                            f32::from(p[2]) / 255.0,
                         )
                     })
                     .collect();

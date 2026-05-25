@@ -69,12 +69,13 @@ impl Bounds {
         }
         t_min = t_min.max(t0);
         t_max = t_max.min(t1);
-        match t_max >= t_min {
-            false => None,
-            true => Some(Interval {
+        if t_max < t_min {
+            None
+        } else {
+            Some(Interval {
                 min: t_min,
                 max: t_max,
-            }),
+            })
         }
     }
 }

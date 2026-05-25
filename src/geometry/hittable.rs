@@ -17,7 +17,7 @@ pub trait Hittable {
 pub enum HittableType {
     Sphere(Sphere),
     Mesh(Mesh),
-    Instance(Instance),
+    Instance(Box<Instance>),
 }
 
 impl Hittable for HittableType {

@@ -28,7 +28,7 @@ pub struct Accessor {
     pub min: Option<Vec<f64>>,
     pub byte_offset: Option<usize>,
     #[serde(rename = "type")]
-    pub accessor_type: AccessorType,
+    pub r#type: AccessorType,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -52,7 +52,7 @@ impl TryFrom<i64> for ComponentType {
             5123 => Ok(ComponentType::UnsignedShort),
             5125 => Ok(ComponentType::UnsignedInt),
             5126 => Ok(ComponentType::Float),
-            _ => Err(format!("Unknown component type: {}", value)),
+            _ => Err(format!("Unknown component type: {value}")),
         }
     }
 }
@@ -123,8 +123,7 @@ impl<'de> Deserialize<'de> for MimeType {
             "image/png" => Ok(MimeType::ImagePng),
             "image/jpeg" => Ok(MimeType::ImageJpeg),
             other => Err(serde::de::Error::custom(format!(
-                "Unknown mime type: {}",
-                other
+                "Unknown mime type: {other}"
             ))),
         }
     }

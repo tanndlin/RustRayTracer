@@ -19,3 +19,6 @@ multithreading = []
 [profile.release]
 debug = true
 strip = false
+
+[lints.clippy]
+pedantic = "warn"

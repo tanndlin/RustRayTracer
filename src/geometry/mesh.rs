@@ -36,18 +36,16 @@ impl Mesh {
                 .accessors
                 .get(primitive.attributes.position)
                 .unwrap();
-            let positions = match pos_accessor.get_data(gltf_data, binary) {
-                AccessorData::Vec3(v) => v,
-                _ => panic!("expected Vec3"),
+            let AccessorData::Vec3(positions) = pos_accessor.get_data(gltf_data, binary) else {
+                panic!("expected Vec3")
             };
 
             let normal_accessor = gltf_data
                 .accessors
                 .get(primitive.attributes.normal)
                 .unwrap();
-            let normals = match normal_accessor.get_data(gltf_data, binary) {
-                AccessorData::Vec3(v) => v,
-                _ => panic!("expected Vec3"),
+            let AccessorData::Vec3(normals) = normal_accessor.get_data(gltf_data, binary) else {
+                panic!("expected Vec3")
             };
 
             let tangents = match primitive.attributes.tangent {
@@ -70,9 +68,8 @@ impl Mesh {
                 .accessors
                 .get(primitive.attributes.texcoord_0)
                 .unwrap();
-            let uvs = match uv_accessor.get_data(gltf_data, binary) {
-                AccessorData::Vec2(v) => v,
-                _ => panic!("expected Vec3"),
+            let AccessorData::Vec2(uvs) = uv_accessor.get_data(gltf_data, binary) else {
+                panic!("expected Vec2")
             };
 
             let index_accessor = gltf_data.accessors.get(primitive.indices).unwrap();

@@ -1,3 +1,4 @@
+#![allow(clippy::cast_possible_truncation, clippy::many_single_char_names)]
 use std::sync::Arc;
 
 use crate::{
@@ -89,7 +90,7 @@ impl Hittable for Instance {
         match self.translation {
             Some(t) => self.translation = Some(t + vec),
             None => self.translation = Some(*vec),
-        };
+        }
 
         self.recompute_bounds();
     }
@@ -193,13 +194,13 @@ fn trs_matrix(translation: Option<Vec3>, rotation: Option<[f32; 4]>, scale: Vec3
     ];
 
     // Scale
-    m[0][0] = scale.x as f64;
-    m[1][1] = scale.y as f64;
-    m[2][2] = scale.z as f64;
+    m[0][0] = f64::from(scale.x);
+    m[1][1] = f64::from(scale.y);
+    m[2][2] = f64::from(scale.z);
 
     // Rotation (quaternion to matrix, applied after scale)
     if let Some([qx, qy, qz, qw]) = rotation {
-        let (qx, qy, qz, qw) = (qx as f64, qy as f64, qz as f64, qw as f64);
+        let (qx, qy, qz, qw) = (f64::from(qx), f64::from(qy), f64::from(qz), f64::from(qw));
         let r = [
             [
                 1.0 - 2.0 * (qy * qy + qz * qz),
@@ -231,9 +232,9 @@ fn trs_matrix(translation: Option<Vec3>, rotation: Option<[f32; 4]>, scale: Vec3
 
     // Translation (just set the last column)
     if let Some(t) = translation {
-        m[0][3] = t.x as f64;
-        m[1][3] = t.y as f64;
-        m[2][3] = t.z as f64;
+        m[0][3] = f64::from(t.x);
+        m[1][3] = f64::from(t.y);
+        m[2][3] = f64::from(t.z);
     }
 
     m
@@ -312,17 +313,20 @@ fn mat4_inverse(m: [[f64; 4]; 4]) -> [[f64; 4]; 4] {
 
 fn mat4_transform_point(m: [[f64; 4]; 4], p: Vec3) -> Vec3 {
     Vec3::new(
-        (m[0][0] * p.x as f64 + m[0][1] * p.y as f64 + m[0][2] * p.z as f64 + m[0][3]) as f32,
-        (m[1][0] * p.x as f64 + m[1][1] * p.y as f64 + m[1][2] * p.z as f64 + m[1][3]) as f32,
-        (m[2][0] * p.x as f64 + m[2][1] * p.y as f64 + m[2][2] * p.z as f64 + m[2][3]) as f32,
+        (m[0][0] * f64::from(p.x) + m[0][1] * f64::from(p.y) + m[0][2] * f64::from(p.z) + m[0][3])
+            as f32,
+        (m[1][0] * f64::from(p.x) + m[1][1] * f64::from(p.y) + m[1][2] * f64::from(p.z) + m[1][3])
+            as f32,
+        (m[2][0] * f64::from(p.x) + m[2][1] * f64::from(p.y) + m[2][2] * f64::from(p.z) + m[2][3])
+            as f32,
     )
 }
 
 fn mat4_transform_dir(m: [[f64; 4]; 4], d: Vec3) -> Vec3 {
     // Directions ignore translation
     Vec3::new(
-        (m[0][0] * d.x as f64 + m[0][1] * d.y as f64 + m[0][2] * d.z as f64) as f32,
-        (m[1][0] * d.x as f64 + m[1][1] * d.y as f64 + m[1][2] * d.z as f64) as f32,
-        (m[2][0] * d.x as f64 + m[2][1] * d.y as f64 + m[2][2] * d.z as f64) as f32,
+        (m[0][0] * f64::from(d.x) + m[0][1] * f64::from(d.y) + m[0][2] * f64::from(d.z)) as f32,
+        (m[1][0] * f64::from(d.x) + m[1][1] * f64::from(d.y) + m[1][2] * f64::from(d.z)) as f32,
+        (m[2][0] * f64::from(d.x) + m[2][1] * f64::from(d.y) + m[2][2] * f64::from(d.z)) as f32,
     )
 }

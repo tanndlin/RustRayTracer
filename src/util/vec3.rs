@@ -32,9 +32,10 @@ impl Vec3 {
 
     pub fn normalize(&self) -> Vec3 {
         let len = self.length_squared().sqrt();
-        match len > 1e-8 {
-            true => *self / len,
-            false => Vec3::zero(),
+        if len > 1e-8 {
+            *self / len
+        } else {
+            Vec3::zero()
         }
     }
 
@@ -205,7 +206,7 @@ impl From<&[f64]> for Vec3 {
         assert!(
             value.len() == 3,
             "{}",
-            format!("Expected a 3D vector. Got: {:?}", value)
+            format!("Expected a 3D vector. Got: {value:?}")
         );
         Self {
             x: value[0] as f32,

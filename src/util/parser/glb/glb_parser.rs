@@ -20,9 +20,7 @@ pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<Mater
         .expect("Failed to read .glb file");
 
     let GlbHeader { version, length } = GlbHeader::from(&buffer[0..12].try_into().unwrap());
-    if version != 2 {
-        panic!("Unsupported GLB version: {}", version);
-    }
+    assert!(version == 2, "Unsupported GLB version: {version}");
 
     println!("Paring GLB version {version} file {path}. Size: {length} bytes");
 
@@ -49,7 +47,7 @@ pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<Mater
     };
     let binary_chunk = chunks
         .iter()
-        .find(|chunk| matches!(chunk.chunk_type, ChunkType::Binary))
+        .find(|chunk| matches!(chunk.r#type, ChunkType::Binary))
         .expect("GLB file must contain a binary chunk");
 
     assemble_scene(gltf_data, binary_chunk, mat_offset)
@@ -94,7 +92,11 @@ fn assemble_scene(
 
     let instances: Vec<HittableType> = nodes
         .iter()
-        .map(|node| HittableType::Instance((instance_bases.as_slice(), (*node).clone()).into()))
+        .map(|node| {
+            HittableType::Instance(Box::new(
+                (instance_bases.as_slice(), (*node).clone()).into(),
+            ))
+        })
         .collect();
 
     let mut materials = vec![];
@@ -117,7 +119,7 @@ fn assemble_scene(
             if let Some(transmission_factor) =
                 mat.extensions.transmission.map(|t| t.transmission_factor)
             {
-                let ior = mat.extensions.ior.map(|i| i.ior).unwrap_or(1.5);
+                let ior = mat.extensions.ior.map_or(1.5, |i| i.ior);
                 let albedo = pbr.base_color_factor.unwrap_or(vec![1.0, 1.0, 1.0, 1.0]);
                 MaterialType::Dielectric(Dielectric::new(
                     name,
@@ -127,24 +129,23 @@ fn assemble_scene(
                 ))
             } else {
                 // Is lambertian
-                match pbr.base_color_texture {
-                    Some(tex) => MaterialType::TextureLambertian(LambertianBase {
+                if let Some(tex) = pbr.base_color_texture {
+                    MaterialType::TextureLambertian(LambertianBase {
                         name,
                         albedo: load_texture(&binary_chunk.data, &gltf_data, tex.index),
                         normal_texture,
                         roughness: 1.0,
                         alpha: 1.0,
-                    }),
-                    None => {
-                        let rgba = pbr.base_color_factor.unwrap();
-                        MaterialType::Lambertian(LambertianBase {
-                            name,
-                            albedo: rgba[..3].into(),
-                            normal_texture,
-                            roughness: 1.0,
-                            alpha: rgba[3] as f32,
-                        })
-                    }
+                    })
+                } else {
+                    let rgba = pbr.base_color_factor.unwrap();
+                    MaterialType::Lambertian(LambertianBase {
+                        name,
+                        albedo: rgba[..3].into(),
+                        normal_texture,
+                        roughness: 1.0,
+                        alpha: rgba[3] as f32,
+                    })
                 }
             }
         };
@@ -162,7 +163,7 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
 
     Chunk {
         length,
-        chunk_type,
+        r#type: chunk_type,
         data,
     }
 }
@@ -187,9 +188,9 @@ fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Vec<Co
         .chunks(4)
         .map(|rgba| {
             Color::new(
-                rgba[0] as f32 / 255.0,
-                rgba[1] as f32 / 255.0,
-                rgba[2] as f32 / 255.0,
+                f32::from(rgba[0]) / 255.0,
+                f32::from(rgba[1]) / 255.0,
+                f32::from(rgba[2]) / 255.0,
             )
         })
         .collect()

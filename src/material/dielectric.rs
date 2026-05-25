@@ -24,9 +24,10 @@ impl Material for Dielectric {
             return (Ray::new(hit_record.point, scatter_dir), self.albedo);
         }
 
-        let ri = match hit_record.front_face {
-            true => 1.0 / self.refraction_index,
-            false => self.refraction_index,
+        let ri = if hit_record.front_face {
+            1.0 / self.refraction_index
+        } else {
+            self.refraction_index
         };
 
         let unit_dir = ray.dir.normalize();
@@ -34,9 +35,10 @@ impl Material for Dielectric {
         let sin_theta = f32::sqrt(1.0 - cos_theta * cos_theta);
 
         let cannot_refract = ri * sin_theta > 1.0;
-        let dir = match cannot_refract || reflectance(cos_theta, ri) > random_double() {
-            true => self.reflect(unit_dir, hit_record.normal),
-            false => self.refract(unit_dir, hit_record.normal, ri),
+        let dir = if cannot_refract || reflectance(cos_theta, ri) > random_double() {
+            Self::reflect(unit_dir, hit_record.normal)
+        } else {
+            Self::refract(unit_dir, hit_record.normal, ri)
         };
 
         let origin = hit_record.point + dir * 1e-4;
@@ -65,11 +67,11 @@ impl Dielectric {
         }
     }
 
-    fn reflect(&self, v: Color, n: Color) -> Color {
+    fn reflect(v: Color, n: Color) -> Color {
         v - n * 2.0 * v.dot(n)
     }
 
-    fn refract(&self, uv: Color, n: Color, ri: f32) -> Color {
+    fn refract(uv: Color, n: Color, ri: f32) -> Color {
         let cos_theta = f32::min(-uv.dot(n), 1.0);
         let r_out_perp = (uv + n * cos_theta) * ri;
         let r_out_parallel = n * -f32::sqrt(f32::abs(1.0 - r_out_perp.length_squared()));

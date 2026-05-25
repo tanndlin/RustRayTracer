@@ -183,18 +183,20 @@ impl<T: Hittable> RecursiveAABB<T> {
 
         match (left_bounds, right_bounds) {
             (Some(lb), Some(rb)) => {
-                let (first, second, far_bounds) = match lb.min < rb.min {
-                    true => (&self.left, &self.right, rb),
-                    false => (&self.right, &self.left, lb),
+                let (first, second, far_bounds) = if lb.min < rb.min {
+                    (&self.left, &self.right, rb)
+                } else {
+                    (&self.right, &self.left, lb)
                 };
 
                 if let Some(hit) = first.hit(ray, interval) {
-                    return Some(match hit.t < far_bounds.min {
-                        true => hit,
-                        false => match second.hit(ray, &Interval::new(interval.min, hit.t)) {
+                    return Some(if hit.t < far_bounds.min {
+                        hit
+                    } else {
+                        match second.hit(ray, &Interval::new(interval.min, hit.t)) {
                             Some(hit2) if hit2.t < hit.t => hit2,
                             _ => hit,
-                        },
+                        }
                     });
                 }
 

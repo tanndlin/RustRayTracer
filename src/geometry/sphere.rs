@@ -1,3 +1,4 @@
+#![allow(clippy::many_single_char_names)]
 use crate::{
     geometry::{bounds::Bounds, hittable::Hittable},
     util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3},

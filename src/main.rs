@@ -1,9 +1,14 @@
+#![allow(
+    clippy::cast_sign_loss,
+    clippy::cast_possible_truncation,
+    clippy::cast_precision_loss
+)]
 use clap::Parser;
 
 use crate::{
     camera::Camera,
-    geometry::hittable::{Hittable, HittableType},
-    util::{parser::glb::glb_parser::parse_glb, quat::from_axis_angle, vec3::Vec3},
+    geometry::hittable::Hittable,
+    util::{parser::glb::glb_parser::parse_glb, vec3::Vec3},
 };
 
 mod camera;
@@ -36,7 +41,7 @@ fn main() {
     let start = std::time::Instant::now();
     let framebuffer = camera.render(&objects);
     let duration = start.elapsed();
-    println!("Render time: {:?}", duration);
+    println!("Render time: {duration:?}");
 
     let file = "output.png";
     image::save_buffer(
@@ -55,5 +60,5 @@ fn main() {
         image::ColorType::Rgb8,
     )
     .unwrap();
-    println!("Saved to {}", file);
+    println!("Saved to {file}");
 }

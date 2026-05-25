@@ -7,9 +7,9 @@ use crate::{
     util::{parser::mtl_parser::parse_mtl, vec3::Vec3},
 };
 
-#[allow(dead_code)]
-pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
-    let file = std::fs::read_to_string(_path).expect("Failed to read .obj file");
+#[allow(dead_code, clippy::too_many_lines)]
+pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
+    let file = std::fs::read_to_string(path).expect("Failed to read .obj file");
     let mut vertices: Vec<Vec3> = vec![];
     let mut v_normals: Vec<Vec3> = vec![];
     let mut v_textures: Vec<Vec3> = vec![];
@@ -33,7 +33,7 @@ pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         match parts[0] {
             "mtllib" => {
                 let mtl_file = parts.get(1).unwrap_or(&"");
-                let mtl_path = std::path::Path::new(_path)
+                let mtl_path = std::path::Path::new(path)
                     .parent()
                     .unwrap_or(std::path::Path::new(""))
                     .join(mtl_file);
@@ -113,14 +113,16 @@ pub fn parse_obj(_path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                     }
                 }
 
-                let normals = match n.iter().all(|&norm| norm.is_some()) {
-                    true => Some((n[0].unwrap(), n[1].unwrap(), n[2].unwrap())),
-                    false => None,
+                let normals = if n.iter().all(|&norm| norm.is_some()) {
+                    Some((n[0].unwrap(), n[1].unwrap(), n[2].unwrap()))
+                } else {
+                    None
                 };
 
-                let uvs = match vt.iter().all(|&tex| tex.is_some()) {
-                    true => Some((vt[0].unwrap(), vt[1].unwrap(), vt[2].unwrap())),
-                    false => None,
+                let uvs = if vt.iter().all(|&tex| tex.is_some()) {
+                    Some((vt[0].unwrap(), vt[1].unwrap(), vt[2].unwrap()))
+                } else {
+                    None
                 };
 
                 tris.push(Tri::new(
