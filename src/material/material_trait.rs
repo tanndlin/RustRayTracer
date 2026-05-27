@@ -1,5 +1,7 @@
 use crate::{
-    material::{dielectric::Dielectric, emissive::Emissive, lambertian::LambertianBase},
+    material::{
+        dielectric::Dielectric, emissive::Emissive, lambertian::LambertianBase, texture::Texture,
+    },
     util::{hit_result::HitResult, ray::Ray, vec3::Color},
 };
 
@@ -11,7 +13,7 @@ pub trait Material: Send + Sync {
 #[allow(dead_code)]
 pub enum MaterialType {
     Lambertian(LambertianBase<Color, f32>),
-    TextureLambertian(LambertianBase<Vec<Color>, Vec<f32>>),
+    TextureLambertian(LambertianBase<Texture, Vec<f32>>),
     Emissive(Emissive),
     Dielectric(Dielectric),
 }

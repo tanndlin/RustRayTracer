@@ -35,7 +35,7 @@ fn main() {
     objects[0].translate(&Vec3::new(10.0, -1.0, 2.0));
     objects[0].rotate(&Vec3::new(0.0, 1.0, 0.0), -135.0);
 
-    let camera = Camera::new(16.0 / 9.0, 1920, args.samples, materials, true);
+    let camera = Camera::new(16.0 / 9.0, 1000, args.samples, materials, true);
     println!("Rendering...");
 
     let start = std::time::Instant::now();

@@ -1,7 +1,7 @@
 use rand::RngExt;
 
 use crate::{
-    material::material_trait::Material,
+    material::{material_trait::Material, texture::Texture},
     util::{
         hit_result::HitResult,
         ray::Ray,
@@ -19,13 +19,11 @@ impl Albedo for Color {
     }
 }
 
-impl Albedo for Vec<Color> {
+impl Albedo for Texture {
     fn sample(&self, hit: &HitResult) -> Color {
-        let width = (self.len() as f32).sqrt() as usize; // TODO: Assumes square
-        let height = self.len() / width;
-        let x = (hit.u * width as f32) as usize % width;
-        let y = (hit.v * height as f32) as usize % height;
-        self[y * width + x]
+        let x = (hit.u * self.width as f32) as usize % self.width;
+        let y = (hit.v * self.height as f32) as usize % self.height;
+        self.data[y * self.width + x]
     }
 }
 
@@ -54,7 +52,7 @@ impl Roughness for Vec<f32> {
 pub struct LambertianBase<TAlbedo, TRough> {
     pub name: String,
     pub albedo: TAlbedo,
-    pub normal_texture: Option<Vec<Vec3>>,
+    pub normal_texture: Option<Texture>,
     pub roughness: TRough,
     pub alpha: f32,
 }
@@ -120,13 +118,17 @@ impl<TAlbedo: Albedo + Sync + Send, TRough: Roughness + Sync + Send> Material
     }
 }
 
-impl From<LambertianBase<Color, f32>> for LambertianBase<Vec<Color>, Vec<f32>> {
+impl From<LambertianBase<Color, f32>> for LambertianBase<Texture, Vec<f32>> {
     fn from(base: LambertianBase<Color, f32>) -> Self {
         let pixels = vec![base.albedo];
-        let roughness = pixels.iter().map(|_| base.roughness).collect();
+        let roughness = vec![base.roughness];
         Self {
             name: base.name,
-            albedo: pixels,
+            albedo: Texture {
+                data: pixels,
+                width: 1,
+                height: 1,
+            },
             normal_texture: None,
             roughness,
             alpha: base.alpha,

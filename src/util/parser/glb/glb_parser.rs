@@ -2,7 +2,10 @@ use std::{io::Read, sync::Arc};
 
 use crate::{
     geometry::hittable::HittableType,
-    material::{dielectric::Dielectric, lambertian::LambertianBase, material_trait::MaterialType},
+    material::{
+        dielectric::Dielectric, lambertian::LambertianBase, material_trait::MaterialType,
+        texture::Texture,
+    },
     util::{
         parser::glb::{
             gltf::{GltfData, Material, MimeType},
@@ -123,7 +126,7 @@ fn assemble_scene(
         // collect per-pixel roughness values if a roughness texture exists
         let roughness = roughness_texture
             .as_ref()
-            .map(|pixels| pixels.iter().map(|rgb| rgb.y).collect::<Vec<f32>>());
+            .map(|pixels| pixels.data.iter().map(|rgb| rgb.y).collect::<Vec<f32>>());
 
         let material = {
             // Is glass
@@ -144,6 +147,7 @@ fn assemble_scene(
                     let albedo = load_texture(&binary_chunk.data, &gltf_data, tex.index);
                     let roughness = roughness.unwrap_or(
                         albedo
+                            .data
                             .iter()
                             .map(|_| pbr.roughness_factor.map_or(0.8, |r| r as f32))
                             .collect(),
@@ -187,7 +191,7 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
     }
 }
 
-fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Vec<Color> {
+fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Texture {
     let texture = gltf_data.textures.get(tex_index).unwrap();
     let image = gltf_data.images.get(texture.source).unwrap();
     let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
@@ -202,7 +206,9 @@ fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Vec<Co
             .to_rgba8(),
     };
 
-    image
+    let width = image.width() as usize;
+    let height = image.height() as usize;
+    let pixels = image
         .into_raw()
         .chunks(4)
         .map(|rgba| {
@@ -212,5 +218,11 @@ fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Vec<Co
                 f32::from(rgba[2]) / 255.0,
             )
         })
-        .collect()
+        .collect();
+
+    Texture {
+        data: pixels,
+        width,
+        height,
+    }
 }

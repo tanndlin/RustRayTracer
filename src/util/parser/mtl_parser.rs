@@ -2,6 +2,7 @@ use crate::{
     material::{
         lambertian::LambertianBase,
         material_trait::{Material, MaterialType},
+        texture::Texture,
     },
     util::vec3::{Color, Vec3},
 };
@@ -55,9 +56,13 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                     .unwrap_or(std::path::Path::new(""))
                     .join(file_name);
                 println!("Loading texture: {}", file_name.display());
-                let pixels: Vec<Color> = image::open(file_name)
+
+                let image = image::open(&file_name)
                     .expect("Failed to open texture file")
-                    .to_rgb8()
+                    .to_rgb8();
+
+                let (width, height) = image.dimensions();
+                let pixels: Vec<Color> = image
                     .pixels()
                     .map(|p| {
                         Color::new(
@@ -68,14 +73,20 @@ pub fn parse_mtl(path: &str) -> Vec<MaterialType> {
                     })
                     .collect();
 
+                let albedo = Texture {
+                    data: pixels,
+                    width: width as usize,
+                    height: height as usize,
+                };
+
                 if let Some(name) = cur_material_name.take()
                     && let Some(last) = materials.pop()
                 {
                     match last {
                         MaterialType::Lambertian(mat) => {
-                            let mut new_mat = LambertianBase::<Vec<Color>, Vec<f32>>::from(mat);
+                            let mut new_mat = LambertianBase::<Texture, Vec<f32>>::from(mat);
                             new_mat.name = name;
-                            new_mat.albedo = pixels;
+                            new_mat.albedo = albedo;
                             materials.push(MaterialType::TextureLambertian(new_mat));
                         }
                         other => {
