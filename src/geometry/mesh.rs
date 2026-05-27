@@ -1,5 +1,10 @@
 use crate::{
-    geometry::{aabb::AABB, bounds::Bounds, hittable::Hittable, tri::Tri},
+    geometry::{
+        aabb::AABB,
+        bounds::Bounds,
+        hittable::{Hittable, HittableType},
+        tri::Tri,
+    },
     util::{
         hit_result::HitResult,
         interval::Interval,
@@ -12,13 +17,13 @@ use crate::{
     },
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Mesh {
-    pub aabb: AABB<Tri>,
+    pub aabb: AABB,
 }
 
 impl Mesh {
-    pub fn new(children: Vec<Tri>) -> Self {
+    pub fn new(children: Vec<HittableType>) -> Self {
         let aabb = AABB::new(children);
         Mesh { aabb }
     }
@@ -112,7 +117,7 @@ impl Mesh {
                     tan,
                     primitive.material.map(|m| m + mat_offset),
                 );
-                children.push(tri);
+                children.push(HittableType::Tri(tri));
             });
         }
 

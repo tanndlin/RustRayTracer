@@ -1,7 +1,7 @@
 use crate::{
     geometry::{
         bounds::{Axis, Bounds},
-        hittable::Hittable,
+        hittable::{Hittable, HittableType},
     },
     util::{
         hit_result::HitResult,
@@ -14,21 +14,21 @@ use crate::{
 
 const MIN_CHILDREN: usize = 8;
 
-#[derive(Debug, Clone)]
-pub enum AABBType<T> {
-    Recursive(RecursiveAABB<T>),
-    Leaf(Vec<T>),
+#[derive(Debug)]
+pub enum AABBType {
+    Recursive(RecursiveAABB),
+    Leaf(Vec<HittableType>),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 #[allow(clippy::upper_case_acronyms)]
-pub struct AABB<T> {
-    pub aabb_type: AABBType<T>,
+pub struct AABB {
+    pub aabb_type: AABBType,
     pub bounds: Bounds,
 }
 
-impl<T: Hittable> AABB<T> {
-    pub fn new(children: Vec<T>) -> Self {
+impl AABB {
+    pub fn new(children: Vec<HittableType>) -> Self {
         let bounds = Self::calc_bounds(&children);
 
         let num_children = children.len();
@@ -67,7 +67,7 @@ impl<T: Hittable> AABB<T> {
         }
     }
 
-    fn calc_bounds(tris: &[T]) -> Bounds {
+    fn calc_bounds(tris: &[HittableType]) -> Bounds {
         let mut bounds = Bounds {
             min: Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
             max: Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
@@ -81,7 +81,7 @@ impl<T: Hittable> AABB<T> {
     }
 }
 
-impl<T: Hittable> Hittable for AABB<T> {
+impl Hittable for AABB {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         self.bounds.hit(ray, interval)?;
         match &self.aabb_type {
@@ -166,14 +166,14 @@ impl<T: Hittable> Hittable for AABB<T> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct RecursiveAABB<T> {
-    pub left: Box<AABB<T>>,
-    pub right: Box<AABB<T>>,
+#[derive(Debug)]
+pub struct RecursiveAABB {
+    pub left: Box<AABB>,
+    pub right: Box<AABB>,
 }
 
-impl<T: Hittable> RecursiveAABB<T> {
-    pub fn new(left: Box<AABB<T>>, right: Box<AABB<T>>) -> Self {
+impl RecursiveAABB {
+    pub fn new(left: Box<AABB>, right: Box<AABB>) -> Self {
         Self { left, right }
     }
 

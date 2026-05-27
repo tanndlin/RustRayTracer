@@ -38,7 +38,7 @@ fn main() {
     println!("Rendering...");
 
     let start = std::time::Instant::now();
-    let framebuffer = camera.render(&objects);
+    let framebuffer = camera.render(objects);
     let duration = start.elapsed();
     println!("Render time: {duration:?}");
 

@@ -140,7 +140,8 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         }
     }
 
-    let mesh = Mesh::new(tris);
+    let hittables = tris.into_iter().map(HittableType::Tri).collect();
+    let mesh = Mesh::new(hittables);
     let objects = vec![HittableType::Mesh(mesh)];
 
     (objects, materials)

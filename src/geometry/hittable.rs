@@ -1,5 +1,5 @@
 use crate::{
-    geometry::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere},
+    geometry::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere, tri::Tri},
     util::{hit_result::HitResult, interval::Interval, parser::glb::gltf, ray::Ray, vec3::Vec3},
 };
 
@@ -16,6 +16,7 @@ pub trait Hittable {
 #[allow(dead_code)]
 pub enum HittableType {
     Sphere(Sphere),
+    Tri(Tri),
     Mesh(Mesh),
     Instance(Box<Instance>),
 }
@@ -24,6 +25,7 @@ impl Hittable for HittableType {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         match self {
             HittableType::Sphere(sphere) => sphere.hit(ray, interval),
+            HittableType::Tri(tri) => tri.hit(ray, interval),
             HittableType::Mesh(mesh) => mesh.hit(ray, interval),
             HittableType::Instance(instance) => instance.hit(ray, interval),
         }
@@ -32,6 +34,7 @@ impl Hittable for HittableType {
     fn get_bounds(&self) -> &Bounds {
         match self {
             HittableType::Sphere(sphere) => sphere.get_bounds(),
+            HittableType::Tri(tri) => tri.get_bounds(),
             HittableType::Mesh(mesh) => mesh.get_bounds(),
             HittableType::Instance(instance) => instance.get_bounds(),
         }
@@ -40,6 +43,7 @@ impl Hittable for HittableType {
     fn translate(&mut self, vec: &Vec3) {
         match self {
             HittableType::Sphere(sphere) => sphere.translate(vec),
+            HittableType::Tri(tri) => tri.translate(vec),
             HittableType::Mesh(mesh) => mesh.translate(vec),
             HittableType::Instance(instance) => instance.translate(vec),
         }
@@ -48,6 +52,7 @@ impl Hittable for HittableType {
     fn scale(&mut self, vec: &Vec3) {
         match self {
             HittableType::Sphere(sphere) => sphere.scale(vec),
+            HittableType::Tri(tri) => tri.scale(vec),
             HittableType::Mesh(mesh) => mesh.scale(vec),
             HittableType::Instance(instance) => instance.scale(vec),
         }
@@ -56,6 +61,7 @@ impl Hittable for HittableType {
     fn rotate(&mut self, axis: &Vec3, angle_rad: f32) {
         match self {
             HittableType::Sphere(sphere) => sphere.rotate(axis, angle_rad),
+            HittableType::Tri(tri) => tri.rotate(axis, angle_rad),
             HittableType::Mesh(mesh) => mesh.rotate(axis, angle_rad),
             HittableType::Instance(instance) => instance.rotate(axis, angle_rad),
         }

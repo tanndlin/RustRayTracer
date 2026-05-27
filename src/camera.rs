@@ -4,13 +4,15 @@ const MAX_BOUNCES: u32 = 100;
 const TILE_SIZE: u32 = 16;
 
 use crate::{
-    geometry::hittable::{Hittable, HittableType},
+    geometry::{
+        aabb::AABB,
+        hittable::{Hittable, HittableType},
+    },
     material::{
         lambertian::LambertianBase,
         material_trait::{Material, MaterialType},
     },
     util::{
-        hit_result::HitResult,
         interval::Interval,
         progress::make_progress_bar,
         ray::Ray,
@@ -99,17 +101,20 @@ impl Camera {
         }
     }
 
-    pub fn render(&self, objects: &Vec<HittableType>) -> Vec<Color> {
+    pub fn render(&self, objects: Vec<HittableType>) -> Vec<Color> {
+        // Create top-level node with BVH
+        let aabb = AABB::new(objects);
+
         let num_tiles =
             (self.total_pixels as f32 / TILE_SIZE as f32 / TILE_SIZE as f32).ceil() as u32;
-        self.collect_tiles(num_tiles, objects)
+        self.collect_tiles(num_tiles, &aabb)
             .into_iter()
             .flatten()
             .collect()
     }
 
     #[cfg(feature = "multithreading")]
-    fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
+    fn collect_tiles(&self, num_tiles: u32, objects: &AABB) -> Vec<Vec<Vec3>> {
         use indicatif::ParallelProgressIterator;
         use rayon::prelude::*;
         (0..num_tiles)
@@ -120,7 +125,7 @@ impl Camera {
     }
 
     #[cfg(not(feature = "multithreading"))]
-    fn collect_tiles(&self, num_tiles: u32, objects: &Vec<HittableType>) -> Vec<Vec<Vec3>> {
+    fn collect_tiles(&self, num_tiles: u32, objects: &AABB) -> Vec<Vec<Vec3>> {
         use indicatif::ProgressIterator;
         (0..num_tiles)
             .progress_with(make_progress_bar(num_tiles as u64))
@@ -128,7 +133,7 @@ impl Camera {
             .collect()
     }
 
-    fn render_tile(&self, tile_index: u32, objects: &Vec<HittableType>) -> Vec<Vec3> {
+    fn render_tile(&self, tile_index: u32, objects: &AABB) -> Vec<Vec3> {
         let mut tile_buffer = vec![];
         let start_pixel = tile_index * TILE_SIZE * TILE_SIZE;
         let end_pixel = ((tile_index + 1) * TILE_SIZE * TILE_SIZE).min(self.total_pixels);
@@ -148,27 +153,17 @@ impl Camera {
         tile_buffer
     }
 
-    fn ray_color(&self, ray: &Ray, objects: &Vec<HittableType>) -> Color {
+    fn ray_color(&self, ray: &Ray, objects: &AABB) -> Color {
         let mut depth = 0;
         let mut attenuation = Color::new(1.0, 1.0, 1.0);
         let mut ray = *ray;
         while depth < MAX_BOUNCES {
-            let mut hit_result: Option<HitResult> = None;
-            let mut interval = Interval {
+            let interval = Interval {
                 min: 0.00001,
                 max: f32::INFINITY,
             };
 
-            for object in objects {
-                if let Some(hit) = object.hit(&ray, &interval)
-                    && (hit_result.is_none() || hit.t < hit_result.as_ref().unwrap().t)
-                {
-                    interval.max = hit.t;
-                    hit_result = Some(hit);
-                }
-            }
-
-            if let Some(hit) = hit_result {
+            if let Some(hit) = objects.hit(&ray, &interval) {
                 let material = match hit.material_index {
                     Some(mat_index) => &self.materials[mat_index],
                     None => &self.default_material,
