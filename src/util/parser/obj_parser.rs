@@ -18,7 +18,7 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
         name: "default".to_string(),
         albedo: Vec3::new(1.0, 0.0, 1.0),
         normal_texture: None,
-        roughness: 1.0,
+        orm: Vec3::new(1.0, 0.8, 0.0),
         alpha: 1.0,
     })];
 

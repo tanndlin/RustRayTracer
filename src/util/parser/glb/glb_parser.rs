@@ -11,7 +11,7 @@ use crate::{
             gltf::{GltfData, Material, MimeType},
             types::{Chunk, ChunkType, GlbHeader},
         },
-        vec3::Color,
+        vec3::{Color, Vec3},
     },
 };
 
@@ -123,10 +123,6 @@ fn assemble_scene(
         let roughness_texture = pbr
             .metallic_roughness_texture
             .map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
-        // collect per-pixel roughness values if a roughness texture exists
-        let roughness = roughness_texture
-            .as_ref()
-            .map(|pixels| pixels.data.iter().map(|rgb| rgb.y).collect::<Vec<f32>>());
 
         let material = {
             // Is glass
@@ -145,19 +141,26 @@ fn assemble_scene(
                 // Is lambertian
                 if let Some(tex) = pbr.base_color_texture {
                     let albedo = load_texture(&binary_chunk.data, &gltf_data, tex.index);
-                    let roughness = roughness.unwrap_or(
-                        albedo
+                    let roughness = roughness_texture.unwrap_or({
+                        let pixels = albedo
                             .data
                             .iter()
                             .map(|_| pbr.roughness_factor.map_or(0.8, |r| r as f32))
-                            .collect(),
-                    );
+                            .map(|r| Vec3::new(0.0, r, 0.0))
+                            .collect();
+
+                        Texture {
+                            data: pixels,
+                            width: albedo.width,
+                            height: albedo.height,
+                        }
+                    });
 
                     MaterialType::TextureLambertian(LambertianBase {
                         name,
                         albedo,
                         normal_texture,
-                        roughness,
+                        orm: roughness,
                         alpha: 1.0,
                     })
                 } else {
@@ -166,7 +169,7 @@ fn assemble_scene(
                         name,
                         albedo: rgba[..3].into(),
                         normal_texture,
-                        roughness: pbr.roughness_factor.unwrap() as f32,
+                        orm: Vec3::new(1.0, pbr.roughness_factor.unwrap() as f32, 0.0),
                         alpha: rgba[3] as f32,
                     })
                 }

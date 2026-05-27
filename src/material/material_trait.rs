@@ -12,8 +12,8 @@ pub trait Material: Send + Sync {
 
 #[allow(dead_code)]
 pub enum MaterialType {
-    Lambertian(LambertianBase<Color, f32>),
-    TextureLambertian(LambertianBase<Texture, Vec<f32>>),
+    Lambertian(LambertianBase<Color, Color>),
+    TextureLambertian(LambertianBase<Texture, Texture>),
     Emissive(Emissive),
     Dielectric(Dielectric),
 }

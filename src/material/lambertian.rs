@@ -27,38 +27,17 @@ impl Albedo for Texture {
     }
 }
 
-pub trait Roughness {
-    fn sample(&self, hit: &HitResult) -> f32;
-}
-
-impl Roughness for f32 {
-    fn sample(&self, _hit: &HitResult) -> f32 {
-        *self
-    }
-}
-
-impl Roughness for Vec<f32> {
-    fn sample(&self, hit: &HitResult) -> f32 {
-        let HitResult { u, v, .. } = hit;
-        let width = (self.len() as f32).sqrt() as usize; // TODO: Assumes square
-        let height = self.len() / width;
-        let x = (u * width as f32) as usize % width;
-        let y = (v * height as f32) as usize % height;
-        self[y * width + x]
-    }
-}
-
 #[derive(Debug)]
-pub struct LambertianBase<TAlbedo, TRough> {
+pub struct LambertianBase<TAlbedo, TORM> {
     pub name: String,
     pub albedo: TAlbedo,
     pub normal_texture: Option<Texture>,
-    pub roughness: TRough,
+    pub orm: TORM,
     pub alpha: f32,
 }
 
-impl<TAlbedo: Albedo + Sync + Send, TRough: Roughness + Sync + Send> Material
-    for LambertianBase<TAlbedo, TRough>
+impl<TAlbedo: Albedo + Sync + Send, TORM: Albedo + Sync + Send> Material
+    for LambertianBase<TAlbedo, TORM>
 {
     fn scatter(&self, ray: &Ray, hit: &HitResult) -> (Ray, Color) {
         if self.alpha < 1.0 {
@@ -95,8 +74,22 @@ impl<TAlbedo: Albedo + Sync + Send, TRough: Roughness + Sync + Send> Material
             hit.normal
         };
 
-        let mut scatter_direction = ray.dir.reflect(shading_normal).normalize();
-        let roughness = self.roughness.sample(hit);
+        let orm = self.orm.sample(hit);
+        let roughness = orm.y;
+        let metallic = orm.z;
+
+        let mut scatter_direction = if metallic > 0.0
+            && ((metallic - 1.0).abs() < 1e-6
+                || THREAD_RNG.with(|rng| rng.borrow_mut().random::<f32>() < metallic))
+        {
+            // Metallic: specular reflection tinted by albedo
+            ray.dir.reflect(shading_normal).normalize()
+        } else {
+            // Dielectric: diffuse scatter
+            (shading_normal + Vec3::random_in_unit_sphere()).normalize()
+        };
+
+        // Apply roughness to whichever scatter model was chosen
         if roughness > 0.0 {
             loop {
                 scatter_direction =
@@ -118,10 +111,11 @@ impl<TAlbedo: Albedo + Sync + Send, TRough: Roughness + Sync + Send> Material
     }
 }
 
-impl From<LambertianBase<Color, f32>> for LambertianBase<Texture, Vec<f32>> {
-    fn from(base: LambertianBase<Color, f32>) -> Self {
+impl From<LambertianBase<Color, Color>> for LambertianBase<Texture, Texture> {
+    fn from(base: LambertianBase<Color, Color>) -> Self {
         let pixels = vec![base.albedo];
-        let roughness = vec![base.roughness];
+        let orm = vec![base.orm];
+
         Self {
             name: base.name,
             albedo: Texture {
@@ -130,7 +124,11 @@ impl From<LambertianBase<Color, f32>> for LambertianBase<Texture, Vec<f32>> {
                 height: 1,
             },
             normal_texture: None,
-            roughness,
+            orm: Texture {
+                data: orm,
+                width: 1,
+                height: 1,
+            },
             alpha: base.alpha,
         }
     }

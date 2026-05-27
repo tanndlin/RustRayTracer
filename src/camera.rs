@@ -80,7 +80,7 @@ impl Camera {
             name: "Default".to_owned(),
             albedo: Color::new(1.0, 0.0, 1.0),
             normal_texture: None,
-            roughness: 1.0,
+            orm: Vec3::new(1.0, 1.0, 0.0),
             alpha: 1.0,
         });
 
