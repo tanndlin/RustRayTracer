@@ -185,7 +185,7 @@ impl Camera {
                         * (Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t);
                 }
 
-                return Color::new(0.0, 0.0, 0.0);
+                return Color::zero();
             }
         }
 
