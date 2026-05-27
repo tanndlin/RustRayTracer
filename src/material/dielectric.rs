@@ -20,8 +20,12 @@ impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit_record: &HitResult) -> (Ray, Color) {
         if random_double() > self.transmission_factor {
             // Treat as opaque lambertian
-            let scatter_dir = hit_record.normal + Vec3::random_in_unit_sphere().normalize();
-            return (Ray::new(hit_record.point, scatter_dir), self.albedo);
+            let mut scatter_dir = hit_record.normal + Vec3::random_in_unit_sphere().normalize();
+            if scatter_dir.dot(hit_record.normal) < 0.0 {
+                scatter_dir = -scatter_dir;
+            }
+            let origin = hit_record.point + hit_record.normal * 1e-4;
+            return (Ray::new(origin, scatter_dir), self.albedo);
         }
 
         let ri = if hit_record.front_face {
