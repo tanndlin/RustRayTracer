@@ -142,21 +142,21 @@ impl Camera {
             let j = pixel_index / self.image_width;
             let pixel_center =
                 self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
-            let ray = Ray::new(self.look_from, (pixel_center - self.look_from).normalize());
 
+            let ray_dir = (pixel_center - self.look_from).normalize();
             let mut color = Vec3::zero();
             for _ in 0..self.samples_per_pixel {
-                color = color + self.ray_color(&ray, objects);
+                let ray = Ray::new(self.look_from, ray_dir);
+                color = color + self.ray_color(ray, objects);
             }
             tile_buffer.push(color / self.samples_per_pixel as f32);
         }
         tile_buffer
     }
 
-    fn ray_color(&self, ray: &Ray, objects: &AABB) -> Color {
+    fn ray_color(&self, mut ray: Ray, objects: &AABB) -> Color {
         let mut depth = 0;
         let mut attenuation = Color::new(1.0, 1.0, 1.0);
-        let mut ray = *ray;
         while depth < MAX_BOUNCES {
             let interval = Interval {
                 min: 0.00001,

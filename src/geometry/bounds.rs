@@ -10,7 +10,7 @@ pub enum Axis {
     Z,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Bounds {
     pub min: Vec3,
     pub max: Vec3,
