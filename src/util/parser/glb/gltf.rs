@@ -5,7 +5,7 @@ use serde::Deserialize;
 #[serde(rename_all = "camelCase")]
 pub struct GltfData {
     pub asset: Asset,
-    pub scene: i64,
+    pub scene: usize,
     pub scenes: Vec<Scene>,
     pub nodes: Vec<Node>,
     pub materials: Vec<Material>,
@@ -21,7 +21,7 @@ pub struct GltfData {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Accessor {
-    pub buffer_view: i64,
+    pub buffer_view: usize,
     pub component_type: ComponentType,
     pub count: usize,
     pub max: Option<Vec<f64>>,
@@ -41,10 +41,10 @@ pub enum ComponentType {
     Float,
 }
 
-impl TryFrom<i64> for ComponentType {
+impl TryFrom<usize> for ComponentType {
     type Error = String;
 
-    fn try_from(value: i64) -> Result<Self, Self::Error> {
+    fn try_from(value: usize) -> Result<Self, Self::Error> {
         match value {
             5120 => Ok(ComponentType::Byte),
             5121 => Ok(ComponentType::UnsignedByte),
@@ -59,7 +59,7 @@ impl TryFrom<i64> for ComponentType {
 
 impl<'de> Deserialize<'de> for ComponentType {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let value = i64::deserialize(d)?;
+        let value = usize::deserialize(d)?;
         ComponentType::try_from(value).map_err(serde::de::Error::custom)
     }
 }
@@ -100,7 +100,7 @@ pub struct BufferView {
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Buffer {
-    byte_length: i64,
+    byte_length: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -214,7 +214,7 @@ pub struct Sampler {
 #[derive(Deserialize, Debug)]
 pub struct Scene {
     name: String,
-    pub nodes: Vec<i64>,
+    pub nodes: Vec<usize>,
 }
 
 #[derive(Deserialize, Debug)]

@@ -2,7 +2,7 @@ use crate::util::parser::glb::gltf::{Accessor, AccessorType, ComponentType, Gltf
 
 impl Accessor {
     pub fn get_data(&self, gltf_data: &GltfData, binary: &[u8]) -> AccessorData {
-        let buffer_view = &gltf_data.buffer_views[self.buffer_view as usize];
+        let buffer_view = &gltf_data.buffer_views[self.buffer_view];
 
         let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
         let byte_length = self.count

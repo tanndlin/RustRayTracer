@@ -66,7 +66,7 @@ fn assemble_scene(
 ) -> (Vec<HittableType>, Vec<MaterialType>) {
     let scene = gltf_data
         .scenes
-        .get(gltf_data.scene as usize)
+        .get(gltf_data.scene)
         .expect("Scene index out of bounds");
 
     let instance_bases = gltf_data
@@ -91,7 +91,7 @@ fn assemble_scene(
         .map(|&node_index| {
             gltf_data
                 .nodes
-                .get(node_index as usize)
+                .get(node_index)
                 .expect("Node index out of bounds")
         })
         .collect::<Vec<_>>();
