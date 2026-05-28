@@ -84,9 +84,9 @@ impl Mesh {
                 let uvc = uvs[tri[2]].into();
                 let uvs = Some((uva, uvb, uvc));
 
-                let na = normals[tri[0]].into();
-                let nb = normals[tri[1]].into();
-                let nc = normals[tri[2]].into();
+                let na = Vec3::from(normals[tri[0]]).normalize();
+                let nb = Vec3::from(normals[tri[1]]).normalize();
+                let nc = Vec3::from(normals[tri[2]]).normalize();
                 let normals = Some((na, nb, nc));
 
                 let tan = match &tangents {

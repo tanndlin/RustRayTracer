@@ -1,14 +1,14 @@
 use geometry::{HittableType, Mesh, Tri};
 use material::{LambertianBase, Material, MaterialType};
-use util::Vec3;
+use util::{Normalized, Point, Vec3};
 
 use crate::mtl_parser::parse_mtl;
 
 #[allow(dead_code, clippy::too_many_lines)]
 pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
     let file = std::fs::read_to_string(path).expect("Failed to read .obj file");
-    let mut vertices: Vec<Vec3> = vec![];
-    let mut v_normals: Vec<Vec3> = vec![];
+    let mut vertices: Vec<Point> = vec![];
+    let mut v_normals: Vec<Vec3<Normalized>> = vec![];
     let mut v_textures: Vec<Vec3> = vec![];
     let mut tris: Vec<Tri> = vec![];
     let mut materials = vec![MaterialType::Lambertian(LambertianBase {
@@ -55,7 +55,7 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                 let x: f32 = parts[1].parse().unwrap_or(0.0);
                 let y: f32 = parts[2].parse().unwrap_or(0.0);
                 let z: f32 = parts[3].parse().unwrap_or(0.0);
-                vertices.push(Vec3 { x, y, z });
+                vertices.push(Point::new(x, y, z));
             }
             "vn" => {
                 if parts.len() < 4 {
@@ -64,7 +64,7 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                 let x: f32 = parts[1].parse().unwrap_or(0.0);
                 let y: f32 = parts[2].parse().unwrap_or(0.0);
                 let z: f32 = parts[3].parse().unwrap_or(0.0);
-                v_normals.push(Vec3 { x, y, z }.normalize());
+                v_normals.push(Vec3::new(x, y, z).normalize());
             }
             "vt" => {
                 // Texture coordinate
@@ -73,7 +73,7 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                 }
                 let u: f32 = parts[1].parse().unwrap_or(0.0);
                 let v: f32 = parts[2].parse().unwrap_or(0.0);
-                v_textures.push(Vec3 { x: u, y: v, z: 0.0 });
+                v_textures.push(Vec3::new(u, v, 0.0));
             }
             "f" => {
                 if parts.len() != 4 {
@@ -81,7 +81,7 @@ pub fn parse_obj(path: &str) -> (Vec<HittableType>, Vec<MaterialType>) {
                     continue;
                 }
 
-                let mut v = [Vec3::zero(); 3];
+                let mut v = [Point::zero(); 3];
                 let mut n = [None, None, None];
                 let mut vt = [None, None, None];
 

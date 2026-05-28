@@ -1,8 +1,6 @@
 use rand::RngExt;
 
-use util::{
-    HitResult, Ray, {Color, THREAD_RNG, Vec3},
-};
+use util::{Color, HitResult, Ray, THREAD_RNG, Unnormalized, Vec3};
 
 use crate::{material_trait::Material, texture::Texture};
 
@@ -80,18 +78,19 @@ impl<TAlbedo: Albedo + Sync + Send, TORM: Albedo + Sync + Send> Material
                 || THREAD_RNG.with(|rng| rng.borrow_mut().random::<f32>() < metallic))
         {
             // Metallic: specular reflection tinted by albedo
-            ray.dir.reflect(shading_normal)
+            ray.dir.reflect(&shading_normal)
         } else {
             // Dielectric: diffuse scatter
-            (shading_normal + Vec3::random_in_unit_sphere()).normalize()
+            (shading_normal + Vec3::<Unnormalized>::random_in_unit_sphere()).normalize()
         };
 
         // Apply roughness to whichever scatter model was chosen
         if roughness > 0.0 {
             loop {
-                scatter_direction =
-                    (scatter_direction + Vec3::random_in_unit_sphere() * roughness).normalize();
-                if scatter_direction.dot(hit.normal) > 0.0 {
+                scatter_direction = (scatter_direction
+                    + Vec3::<Unnormalized>::random_in_unit_sphere() * roughness)
+                    .normalize();
+                if scatter_direction.dot(&hit.normal) > 0.0 {
                     break;
                 }
             }

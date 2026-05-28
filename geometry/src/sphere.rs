@@ -1,12 +1,12 @@
 #![allow(clippy::many_single_char_names)]
 
-use util::{HitResult, Interval, Ray, Vec3};
+use util::{HitResult, Interval, Point, Ray, Vec3};
 
 use crate::{bounds::Bounds, hittable::Hittable};
 
 #[derive(Debug)]
 pub struct Sphere {
-    pub center: Vec3,
+    pub center: Point,
     pub radius: f32,
     bounds: Bounds,
     pub material_index: Option<usize>,
@@ -15,12 +15,7 @@ pub struct Sphere {
 impl Sphere {
     #[allow(dead_code)]
     pub fn new(center: Vec3, radius: f32, material_index: Option<usize>) -> Self {
-        let r_vec = Vec3 {
-            x: radius,
-            y: radius,
-            z: radius,
-        };
-
+        let r_vec = Point::new(radius, radius, radius);
         let bounds = Bounds {
             min: center - r_vec,
             max: center + r_vec,
@@ -39,7 +34,7 @@ impl Hittable for Sphere {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         let oc = self.center - ray.origin;
         let a = ray.dir.length_squared();
-        let h = ray.dir.dot(oc);
+        let h = ray.dir.dot(&oc);
         let c = oc.length_squared() - self.radius * self.radius;
 
         let discriminant = h * h - a * c;
@@ -56,10 +51,11 @@ impl Hittable for Sphere {
         }
 
         let point = ray.at(t);
-        let normal = (point - self.center) / self.radius;
+        let outward = (point - self.center) / self.radius;
 
-        let u = 0.5 + (normal.z.atan2(normal.x)) / (2.0 * std::f32::consts::PI);
-        let v = 0.5 - (normal.y.asin()) / std::f32::consts::PI;
+        let u = 0.5 + outward.z.atan2(outward.x) / (2.0 * std::f32::consts::PI);
+        let v = 0.5 - outward.y.asin() / std::f32::consts::PI;
+        let normal = outward.normalize();
 
         Some(HitResult {
             normal,
@@ -69,7 +65,7 @@ impl Hittable for Sphere {
             u,
             v,
             material_index: self.material_index,
-            front_face: ray.dir.dot(normal) < 0.0,
+            front_face: ray.dir.dot(&normal) < 0.0,
         })
     }
 

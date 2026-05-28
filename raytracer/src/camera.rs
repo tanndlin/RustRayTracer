@@ -5,9 +5,7 @@ const TILE_SIZE: u32 = 16;
 
 use geometry::{AABB, Hittable, HittableType};
 use material::{LambertianBase, Material, MaterialType};
-use util::{
-    Interval, Ray, {Color, Vec3},
-};
+use util::{Color, Interval, Point, Ray, Unnormalized, Vec3};
 
 use crate::progress::make_progress_bar;
 
@@ -15,7 +13,7 @@ pub struct Camera {
     pub image_width: u32,
     pub image_height: u32,
     samples_per_pixel: u32,
-    look_from: Vec3,
+    look_from: Point,
     materials: Vec<MaterialType>,
     default_material: MaterialType,
     pixel_delta_u: Vec3,
@@ -35,9 +33,9 @@ impl Camera {
     ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
-        let look_from = Vec3::new(-5.0, 2.0, -2.0);
-        let look_at = Vec3::new(0.0, 0.0, 0.0);
-        let up = Vec3::new(0.0, 1.0, 0.0);
+        let look_from = Point::new(-5.0, 2.0, -2.0);
+        let look_at = Point::new(0.0, 0.0, 0.0);
+        let up = Vec3::new(0.0, 1.0, 0.0).normalize();
         let fov = 55;
 
         // let look_from = Vec3::new(-50.0, 25.0, -2.0);
@@ -136,7 +134,7 @@ impl Camera {
                 self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
 
             let ray_dir = (pixel_center - self.look_from).normalize();
-            let mut color = Vec3::zero();
+            let mut color = Color::zero();
             for _ in 0..self.samples_per_pixel {
                 let ray = Ray::new(self.look_from, ray_dir);
                 color = color + self.ray_color(ray, objects);
@@ -146,7 +144,7 @@ impl Camera {
         tile_buffer
     }
 
-    fn ray_color(&self, mut ray: Ray, objects: &AABB) -> Color {
+    fn ray_color(&self, mut ray: Ray, objects: &AABB) -> Vec3<Unnormalized> {
         let mut depth = 0;
         let mut attenuation = Color::new(1.0, 1.0, 1.0);
         while depth < MAX_BOUNCES {

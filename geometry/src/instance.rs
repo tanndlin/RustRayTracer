@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use gltf::Node;
 use util::{
-    HitResult, Interval, Ray, Vec3,
+    HitResult, Interval, Point, Ray, Unnormalized, Vec3,
     quat::{from_axis_angle, quat_multiply, quat_rotate},
 };
 
@@ -60,9 +60,8 @@ impl Hittable for Instance {
         let origin = mat4_transform_point(self.world_to_object, ray.origin);
         let dir_transformed = mat4_transform_dir(self.world_to_object, ray.dir);
         let dir_length = dir_transformed.length();
-        let dir = dir_transformed / dir_length;
 
-        let transformed_ray = Ray::new(origin, dir);
+        let transformed_ray = Ray::new(origin, dir_transformed.normalize());
         let transformed_interval = Interval {
             min: interval.min * dir_length,
             max: interval.max * dir_length,
@@ -174,8 +173,8 @@ impl Instance {
             })
             .collect();
 
-        let min = transformed.iter().copied().reduce(Vec3::min).unwrap();
-        let max = transformed.iter().copied().reduce(Vec3::max).unwrap();
+        let min = transformed.iter().copied().reduce(Point::min).unwrap();
+        let max = transformed.iter().copied().reduce(Point::max).unwrap();
         Bounds { min, max }
     }
 }
@@ -318,8 +317,7 @@ fn mat4_transform_point(m: [[f64; 4]; 4], p: Vec3) -> Vec3 {
     )
 }
 
-fn mat4_transform_dir(m: [[f64; 4]; 4], d: Vec3) -> Vec3 {
-    // Directions ignore translation
+fn mat4_transform_dir<S>(m: [[f64; 4]; 4], d: Vec3<S>) -> Vec3<Unnormalized> {
     Vec3::new(
         (m[0][0] * f64::from(d.x) + m[0][1] * f64::from(d.y) + m[0][2] * f64::from(d.z)) as f32,
         (m[1][0] * f64::from(d.x) + m[1][1] * f64::from(d.y) + m[1][2] * f64::from(d.z)) as f32,

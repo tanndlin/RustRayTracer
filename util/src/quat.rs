@@ -8,11 +8,11 @@ pub fn quat_rotate(q: [f32; 4], v: Vec3) -> Vec3 {
     let iz = qw * v.z + qx * v.y - qy * v.x;
     let iw = -qx * v.x - qy * v.y - qz * v.z;
 
-    Vec3 {
-        x: ix * qw + iw * -qx + iy * -qz - iz * -qy,
-        y: iy * qw + iw * -qy + iz * -qx - ix * -qz,
-        z: iz * qw + iw * -qz + ix * -qy - iy * -qx,
-    }
+    Vec3::new(
+        ix * qw + iw * -qx + iy * -qz - iz * -qy,
+        iy * qw + iw * -qy + iz * -qx - ix * -qz,
+        iz * qw + iw * -qz + ix * -qy - iy * -qx,
+    )
 }
 
 pub fn from_axis_angle(axis: Vec3, angle_rad: f32) -> [f32; 4] {

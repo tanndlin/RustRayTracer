@@ -1,7 +1,7 @@
 #![allow(clippy::similar_names, clippy::many_single_char_names)]
 
 use util::{
-    HitResult, Interval, Ray, Vec3,
+    HitResult, Interval, Normalized, Point, Ray, Vec3,
     quat::{self, quat_rotate},
 };
 
@@ -10,11 +10,11 @@ use crate::{bounds::Bounds, hittable::Hittable};
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct Tri {
-    v0: Vec3,
-    v1: Vec3,
-    v2: Vec3,
+    v0: Point,
+    v1: Point,
+    v2: Point,
 
-    pub normals: Option<(Vec3, Vec3, Vec3)>,
+    pub normals: Option<(Vec3<Normalized>, Vec3<Normalized>, Vec3<Normalized>)>,
     pub uvs: Option<(Vec3, Vec3, Vec3)>,
     tangents: Option<[[f32; 4]; 3]>,
     face_normal: Vec3,
@@ -27,10 +27,10 @@ pub struct Tri {
 
 impl Tri {
     pub fn new(
-        v0: Vec3,
-        v1: Vec3,
-        v2: Vec3,
-        normals: Option<(Vec3, Vec3, Vec3)>,
+        v0: Point,
+        v1: Point,
+        v2: Point,
+        normals: Option<(Vec3<Normalized>, Vec3<Normalized>, Vec3<Normalized>)>,
         uvs: Option<(Vec3, Vec3, Vec3)>,
         tangents: Option<[[f32; 4]; 3]>,
         material_index: Option<usize>,
@@ -39,8 +39,8 @@ impl Tri {
         let edge_ac = v2 - v0;
         let face_normal = Vec3::cross(edge_ab, edge_ac);
         let bounds = Bounds {
-            min: Vec3::min(v0, Vec3::min(v1, v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
-            max: Vec3::max(v0, Vec3::max(v1, v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
+            min: Point::min(v0, Point::min(v1, v2)) - Point::new(1e-6, 1e-6, 1e-6),
+            max: Point::max(v0, Point::max(v1, v2)) + Point::new(1e-6, 1e-6, 1e-6),
         };
 
         let tangents = if tangents.is_none()
@@ -71,10 +71,10 @@ impl Tri {
     fn recompute_derived(&mut self) {
         self.edge_ab = self.v1 - self.v0;
         self.edge_ac = self.v2 - self.v0;
-        self.face_normal = Vec3::cross(self.edge_ab, self.edge_ac).normalize();
+        self.face_normal = Vec3::cross(self.edge_ab, self.edge_ac);
         self.bounds = Bounds {
-            min: Vec3::min(self.v0, Vec3::min(self.v1, self.v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
-            max: Vec3::max(self.v0, Vec3::max(self.v1, self.v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
+            min: Point::min(self.v0, Point::min(self.v1, self.v2)) - Point::new(1e-6, 1e-6, 1e-6),
+            max: Point::max(self.v0, Point::max(self.v1, self.v2)) + Point::new(1e-6, 1e-6, 1e-6),
         };
     }
 }
@@ -85,7 +85,7 @@ impl Hittable for Tri {
         let dao = Vec3::cross(ao, r.dir);
 
         // Backface culling
-        let determinant = -r.dir.dot(self.face_normal);
+        let determinant = -r.dir.dot(&self.face_normal);
         // // TODO: Respect double_sided on the material
         if determinant.abs() < 1e-6 {
             return None;
@@ -96,17 +96,17 @@ impl Hittable for Tri {
         let inv_det = 1.0 / determinant;
 
         // Calculate dst to triangle
-        let dst = ao.dot(self.face_normal) * inv_det;
+        let dst = ao.dot(&self.face_normal) * inv_det;
         if !interval.contains(dst) {
             return None;
         }
 
-        let u = self.edge_ac.dot(dao) * inv_det;
+        let u = self.edge_ac.dot(&dao) * inv_det;
         if !(0.0..=1.0).contains(&u) {
             return None;
         }
 
-        let v = -self.edge_ab.dot(dao) * inv_det;
+        let v = -self.edge_ab.dot(&dao) * inv_det;
         if v < 0.0 || u + v > 1.0 {
             return None;
         }
@@ -117,12 +117,12 @@ impl Hittable for Tri {
                 let normal = n0 * w + n1 * u + n2 * v;
                 normal.normalize()
             }
-            None => self.face_normal,
+            None => self.face_normal.normalize(),
         };
 
         let mut normal =
             if !interpolated_normal.is_finite() || interpolated_normal.length_squared() < 1e-6 {
-                self.face_normal
+                self.face_normal.normalize()
             } else {
                 interpolated_normal
             };
@@ -154,7 +154,7 @@ impl Hittable for Tri {
             .normalize();
             let handedness = t0[3]; // W should be constant across the triangle
             let bitangent = Vec3::cross(normal, t) * handedness;
-            Some((t, bitangent))
+            Some((t, bitangent.normalize()))
         } else {
             None
         };

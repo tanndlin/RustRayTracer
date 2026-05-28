@@ -7,4 +7,4 @@ mod vec3;
 pub use hit_result::HitResult;
 pub use interval::Interval;
 pub use ray::Ray;
-pub use vec3::{Color, THREAD_RNG, Vec3};
+pub use vec3::{Color, Normalized, Point, THREAD_RNG, Unnormalized, Vec3};
