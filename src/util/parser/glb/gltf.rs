@@ -111,7 +111,7 @@ pub struct Image {
     pub name: String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub enum MimeType {
     ImagePng,
     ImageJpeg,
