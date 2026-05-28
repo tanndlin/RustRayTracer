@@ -71,7 +71,7 @@ impl Tri {
     fn recompute_derived(&mut self) {
         self.edge_ab = self.v1 - self.v0;
         self.edge_ac = self.v2 - self.v0;
-        self.face_normal = Vec3::cross(self.edge_ab, self.edge_ac);
+        self.face_normal = Vec3::cross(self.edge_ab, self.edge_ac).normalize();
         self.bounds = Bounds {
             min: Vec3::min(self.v0, Vec3::min(self.v1, self.v2)) - Vec3::new(1e-6, 1e-6, 1e-6),
             max: Vec3::max(self.v0, Vec3::max(self.v1, self.v2)) + Vec3::new(1e-6, 1e-6, 1e-6),
@@ -117,16 +117,18 @@ impl Hittable for Tri {
                 let normal = n0 * w + n1 * u + n2 * v;
                 normal.normalize()
             }
-            None => self.face_normal.normalize(),
+            None => self.face_normal,
         };
 
-        let mut n = interpolated_normal.normalize();
-        if !n.is_finite() || n.length_squared() < 1e-6 {
-            n = self.face_normal.normalize(); // fallback
-        }
+        let mut normal =
+            if !interpolated_normal.is_finite() || interpolated_normal.length_squared() < 1e-6 {
+                self.face_normal
+            } else {
+                interpolated_normal
+            };
 
         if determinant < 0.0 {
-            n = -n;
+            normal = -normal;
         }
 
         let point = r.at(dst);
@@ -151,14 +153,14 @@ impl Hittable for Tri {
             )
             .normalize();
             let handedness = t0[3]; // W should be constant across the triangle
-            let bitangent = Vec3::cross(n, t) * handedness;
+            let bitangent = Vec3::cross(normal, t) * handedness;
             Some((t, bitangent))
         } else {
             None
         };
 
         Some(HitResult {
-            normal: n,
+            normal,
             tangent,
             t: dst,
             point,

@@ -16,7 +16,7 @@ impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit_record: &HitResult) -> (Ray, Color) {
         if random_double() > self.transmission_factor {
             // Treat as opaque lambertian
-            let mut scatter_dir = hit_record.normal + Vec3::random_in_unit_sphere().normalize();
+            let mut scatter_dir = hit_record.normal + Vec3::random_in_unit_sphere();
             if scatter_dir.dot(hit_record.normal) < 0.0 {
                 scatter_dir = -scatter_dir;
             }
@@ -30,7 +30,7 @@ impl Material for Dielectric {
             self.refraction_index
         };
 
-        let unit_dir = ray.dir.normalize();
+        let unit_dir = ray.dir;
         let cos_theta = f32::min(-unit_dir.dot(hit_record.normal), 1.0);
         let sin_theta = f32::sqrt(1.0 - cos_theta * cos_theta);
 

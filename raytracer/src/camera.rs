@@ -171,8 +171,7 @@ impl Camera {
             } else {
                 // Background gradient
                 if self.use_background_gradient {
-                    let unit_direction = ray.dir.normalize();
-                    let t = 0.5 * (unit_direction.y + 1.0);
+                    let t = 0.5 * (ray.dir.y + 1.0);
                     return attenuation
                         * (Color::new(1.0 - t, 1.0 - t, 1.0 - t) + Color::new(0.5, 0.7, 1.0) * t);
                 }

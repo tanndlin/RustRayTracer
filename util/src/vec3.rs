@@ -31,9 +31,9 @@ impl Vec3 {
     }
 
     pub fn normalize(&self) -> Vec3 {
-        let len = self.length_squared().sqrt();
-        if len > 1e-8 {
-            *self / len
+        let len_squared = self.length_squared();
+        if len_squared > 1e-8 {
+            *self / len_squared.sqrt()
         } else {
             Vec3::zero()
         }

@@ -80,7 +80,7 @@ impl<TAlbedo: Albedo + Sync + Send, TORM: Albedo + Sync + Send> Material
                 || THREAD_RNG.with(|rng| rng.borrow_mut().random::<f32>() < metallic))
         {
             // Metallic: specular reflection tinted by albedo
-            ray.dir.reflect(shading_normal).normalize()
+            ray.dir.reflect(shading_normal)
         } else {
             // Dielectric: diffuse scatter
             (shading_normal + Vec3::random_in_unit_sphere()).normalize()
