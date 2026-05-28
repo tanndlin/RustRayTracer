@@ -1,12 +1,9 @@
 use std::{io::Read, sync::Arc};
 
-use geometry::hittable::HittableType;
-use gltf::gltf::{GltfData, Material, MimeType};
-use material::{
-    dielectric::Dielectric, lambertian::LambertianBase, material_trait::MaterialType,
-    texture::Texture,
-};
-use util::vec3::{Color, Vec3};
+use geometry::HittableType;
+use gltf::{GltfData, Material, MimeType};
+use material::{Dielectric, LambertianBase, MaterialType, Texture};
+use util::{Color, Vec3};
 
 use crate::glb::types::{Chunk, ChunkType, GlbHeader};
 

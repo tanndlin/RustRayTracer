@@ -1,8 +1,6 @@
 use rand::RngExt;
 use util::{
-    hit_result::HitResult,
-    ray::Ray,
-    vec3::{Color, THREAD_RNG, Vec3},
+    HitResult, Ray, {Color, THREAD_RNG, Vec3},
 };
 
 use crate::material_trait::Material;

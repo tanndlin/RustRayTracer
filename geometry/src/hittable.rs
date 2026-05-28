@@ -1,5 +1,5 @@
-use gltf::gltf::{GltfData, Mesh as GltfMesh};
-use util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3};
+use gltf::{GltfData, GltfMesh};
+use util::{HitResult, Interval, Ray, Vec3};
 
 use crate::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere, tri::Tri};
 

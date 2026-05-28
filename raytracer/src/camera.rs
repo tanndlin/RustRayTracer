@@ -3,18 +3,10 @@ use std::f32::consts::PI;
 const MAX_BOUNCES: u32 = 100;
 const TILE_SIZE: u32 = 16;
 
-use geometry::{
-    aabb::AABB,
-    hittable::{Hittable, HittableType},
-};
-use material::{
-    lambertian::LambertianBase,
-    material_trait::{Material, MaterialType},
-};
+use geometry::{AABB, Hittable, HittableType};
+use material::{LambertianBase, Material, MaterialType};
 use util::{
-    interval::Interval,
-    ray::Ray,
-    vec3::{Color, Vec3, cross},
+    Interval, Ray, {Color, Vec3},
 };
 
 use crate::progress::make_progress_bar;
@@ -60,8 +52,8 @@ impl Camera {
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
         let w = (look_from - look_at).normalize();
-        let u = cross(up, w).normalize();
-        let v = cross(w, u);
+        let u = Vec3::cross(up, w).normalize();
+        let v = Vec3::cross(w, u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
         let viewport_u = u * viewport_width; // Vector across viewport horizontal edge

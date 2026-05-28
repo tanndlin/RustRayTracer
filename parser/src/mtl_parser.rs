@@ -1,9 +1,5 @@
-use material::{
-    lambertian::LambertianBase,
-    material_trait::{Material, MaterialType},
-    texture::Texture,
-};
-use util::vec3::{Color, Vec3};
+use material::{LambertianBase, Material, MaterialType, Texture};
+use util::{Color, Vec3};
 
 #[allow(dead_code)]
 pub fn parse_mtl(path: &str) -> Vec<MaterialType> {

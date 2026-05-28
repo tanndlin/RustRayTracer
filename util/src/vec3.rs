@@ -74,6 +74,30 @@ impl Vec3 {
     pub fn dot(&self, normal: Vec3) -> f32 {
         self.x * normal.x + self.y * normal.y + self.z * normal.z
     }
+
+    pub fn min(u: Vec3, v: Vec3) -> Vec3 {
+        Vec3 {
+            x: u.x.min(v.x),
+            y: u.y.min(v.y),
+            z: u.z.min(v.z),
+        }
+    }
+
+    pub fn max(u: Vec3, v: Vec3) -> Vec3 {
+        Vec3 {
+            x: u.x.max(v.x),
+            y: u.y.max(v.y),
+            z: u.z.max(v.z),
+        }
+    }
+
+    pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
+        Vec3 {
+            x: u.y * v.z - u.z * v.y,
+            y: u.z * v.x - u.x * v.z,
+            z: u.x * v.y - u.y * v.x,
+        }
+    }
 }
 
 thread_local! {
@@ -174,30 +198,6 @@ impl ops::Div<f32> for Vec3 {
             y: self.y / divisor,
             z: self.z / divisor,
         }
-    }
-}
-
-pub fn min(u: Vec3, v: Vec3) -> Vec3 {
-    Vec3 {
-        x: u.x.min(v.x),
-        y: u.y.min(v.y),
-        z: u.z.min(v.z),
-    }
-}
-
-pub fn max(u: Vec3, v: Vec3) -> Vec3 {
-    Vec3 {
-        x: u.x.max(v.x),
-        y: u.y.max(v.y),
-        z: u.z.max(v.z),
-    }
-}
-
-pub fn cross(u: Vec3, v: Vec3) -> Vec3 {
-    Vec3 {
-        x: u.y * v.z - u.z * v.y,
-        y: u.z * v.x - u.x * v.z,
-        z: u.x * v.y - u.y * v.x,
     }
 }
 

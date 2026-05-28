@@ -1,8 +1,5 @@
-use gltf::{
-    accessor::{self, AccessorData},
-    gltf::{GltfData, Mesh as GltfMesh},
-};
-use util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3};
+use gltf::{AccessorData, GltfData, GltfMesh};
+use util::{HitResult, Interval, Ray, Vec3};
 
 use crate::{
     aabb::AABB,
@@ -73,7 +70,7 @@ impl Mesh {
 
             let index_accessor = gltf_data.accessors.get(primitive.indices).unwrap();
             let indices: Vec<usize> = match index_accessor.get_data(gltf_data, binary) {
-                accessor::AccessorData::Scalar(v) => v.into_iter().map(|i| i as usize).collect(),
+                AccessorData::Scalar(v) => v.into_iter().map(|i| i as usize).collect(),
                 _ => panic!("Expected scalars"),
             };
 

@@ -1,9 +1,6 @@
-use geometry::{hittable::HittableType, mesh::Mesh, tri::Tri};
-use material::{
-    lambertian::LambertianBase,
-    material_trait::{Material, MaterialType},
-};
-use util::vec3::Vec3;
+use geometry::{HittableType, Mesh, Tri};
+use material::{LambertianBase, Material, MaterialType};
+use util::Vec3;
 
 use crate::mtl_parser::parse_mtl;
 

@@ -1,9 +1,6 @@
 use util::{
-    hit_result::HitResult,
-    interval::Interval,
+    HitResult, Interval, Ray, Vec3,
     quat::{from_axis_angle, quat_rotate},
-    ray::Ray,
-    vec3::Vec3,
 };
 
 use crate::{

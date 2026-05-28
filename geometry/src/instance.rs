@@ -1,13 +1,10 @@
 #![allow(clippy::cast_possible_truncation, clippy::many_single_char_names)]
 use std::sync::Arc;
 
-use gltf::gltf::Node;
+use gltf::Node;
 use util::{
-    hit_result::HitResult,
-    interval::Interval,
+    HitResult, Interval, Ray, Vec3,
     quat::{from_axis_angle, quat_multiply, quat_rotate},
-    ray::Ray,
-    vec3::{Vec3, max, min},
 };
 
 use crate::{
@@ -177,8 +174,8 @@ impl Instance {
             })
             .collect();
 
-        let min = transformed.iter().copied().reduce(min).unwrap();
-        let max = transformed.iter().copied().reduce(max).unwrap();
+        let min = transformed.iter().copied().reduce(Vec3::min).unwrap();
+        let max = transformed.iter().copied().reduce(Vec3::max).unwrap();
         Bounds { min, max }
     }
 }

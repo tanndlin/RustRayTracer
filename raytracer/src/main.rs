@@ -4,9 +4,9 @@
     clippy::cast_precision_loss
 )]
 use clap::Parser;
-use geometry::hittable::Hittable;
-use parser::glb::glb_parser::parse_glb;
-use util::vec3::Vec3;
+use geometry::Hittable;
+use parser::parse_glb;
+use util::Vec3;
 
 use crate::camera::Camera;
 

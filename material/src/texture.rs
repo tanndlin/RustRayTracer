@@ -1,4 +1,4 @@
-use util::vec3::Color;
+use util::Color;
 
 #[derive(Debug)]
 pub struct Texture {

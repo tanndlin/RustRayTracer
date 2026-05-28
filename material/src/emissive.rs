@@ -1,4 +1,4 @@
-use util::{hit_result::HitResult, ray::Ray, vec3::Color};
+use util::{Color, HitResult, Ray};
 
 use crate::material_trait::Material;
 

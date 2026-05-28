@@ -1,5 +1,10 @@
-pub mod hit_result;
-pub mod interval;
+mod hit_result;
+mod interval;
 pub mod quat;
-pub mod ray;
-pub mod vec3;
+mod ray;
+mod vec3;
+
+pub use hit_result::HitResult;
+pub use interval::Interval;
+pub use ray::Ray;
+pub use vec3::{Color, THREAD_RNG, Vec3};

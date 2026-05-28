@@ -1,8 +1,4 @@
-use util::{
-    interval::Interval,
-    ray::Ray,
-    vec3::{Vec3, max, min},
-};
+use util::{Interval, Ray, Vec3};
 
 pub enum Axis {
     X,
@@ -18,8 +14,8 @@ pub struct Bounds {
 
 impl Bounds {
     pub fn expand_to_contain(&mut self, get_bounds: &Bounds) {
-        self.min = min(self.min, get_bounds.min);
-        self.max = max(self.max, get_bounds.max);
+        self.min = Vec3::min(self.min, get_bounds.min);
+        self.max = Vec3::max(self.max, get_bounds.max);
     }
 
     pub fn longest_axis(&self) -> Axis {

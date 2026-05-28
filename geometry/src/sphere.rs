@@ -1,6 +1,6 @@
 #![allow(clippy::many_single_char_names)]
 
-use util::{hit_result::HitResult, interval::Interval, ray::Ray, vec3::Vec3};
+use util::{HitResult, Interval, Ray, Vec3};
 
 use crate::{bounds::Bounds, hittable::Hittable};
 
