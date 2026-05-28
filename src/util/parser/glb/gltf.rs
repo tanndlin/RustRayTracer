@@ -1,5 +1,5 @@
 #![allow(dead_code)]
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -64,7 +64,7 @@ impl<'de> Deserialize<'de> for ComponentType {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub enum AccessorType {
     #[serde(rename = "SCALAR")]
     Scalar,
@@ -82,13 +82,13 @@ pub enum AccessorType {
     Mat4,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Asset {
     generator: String,
     version: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct BufferView {
     pub buffer: usize,
@@ -97,7 +97,7 @@ pub struct BufferView {
     pub target: Option<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Buffer {
     byte_length: i64,
@@ -158,7 +158,7 @@ pub struct Material {
     pub extensions: MaterialExtensions,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Texture {
     pub index: usize,
 }
@@ -173,20 +173,20 @@ pub struct PbrMetallicRoughness {
     pub roughness_factor: Option<f64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Mesh {
     pub name: String,
     pub primitives: Vec<Primitive>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Primitive {
     pub attributes: Attributes,
     pub indices: usize,
     pub material: Option<usize>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub struct Attributes {
     pub position: usize,
@@ -195,7 +195,7 @@ pub struct Attributes {
     pub texcoord_0: usize,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Node {
     pub mesh: Option<usize>,
     pub name: String,
@@ -204,20 +204,20 @@ pub struct Node {
     pub translation: Option<Vec<f64>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Sampler {
     mag_filter: i64,
     min_filter: i64,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Scene {
     name: String,
     pub nodes: Vec<i64>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct TextureElement {
     pub sampler: usize,
     pub source: usize, // image index
