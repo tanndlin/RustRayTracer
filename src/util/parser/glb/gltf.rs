@@ -31,7 +31,7 @@ pub struct Accessor {
     pub r#type: AccessorType,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub enum ComponentType {
     Byte,
     UnsignedByte,

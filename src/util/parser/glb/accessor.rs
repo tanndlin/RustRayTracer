@@ -7,11 +7,11 @@ impl Accessor {
         let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
         let byte_length = self.count
             * self.r#type.component_count() as usize
-            * component_size(self.component_type) as usize;
+            * component_size(&self.component_type) as usize;
 
         let data = &binary[byte_offset..(byte_offset + byte_length)];
 
-        AccessorData::from((&self.r#type, self.component_type, data))
+        AccessorData::from((&self.r#type, &self.component_type, data))
     }
 }
 
@@ -40,8 +40,8 @@ pub enum AccessorData {
     Mat4(Vec<[[f64; 4]; 4]>),
 }
 
-impl From<(&AccessorType, ComponentType, &[u8])> for AccessorData {
-    fn from((accessor_type, component_type, data): (&AccessorType, ComponentType, &[u8])) -> Self {
+impl From<(&AccessorType, &ComponentType, &[u8])> for AccessorData {
+    fn from((accessor_type, component_type, data): (&AccessorType, &ComponentType, &[u8])) -> Self {
         match accessor_type {
             AccessorType::Scalar => AccessorData::into_scalar(component_type, data),
             AccessorType::Vec2 => AccessorData::into_vec2(component_type, data),
@@ -55,7 +55,7 @@ impl From<(&AccessorType, ComponentType, &[u8])> for AccessorData {
 }
 
 impl AccessorData {
-    fn into_scalar(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_scalar(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Scalar(
             data.chunks(cs)
@@ -64,7 +64,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec2(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_vec2(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec2(
             data.chunks(cs * 2)
@@ -73,7 +73,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec3(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_vec3(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec3(
             data.chunks(cs * 3)
@@ -82,7 +82,7 @@ impl AccessorData {
         )
     }
 
-    fn into_vec4(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_vec4(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Vec4(
             data.chunks(cs * 4)
@@ -91,7 +91,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat2(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_mat2(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat2(
             data.chunks(cs * 4)
@@ -104,7 +104,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat3(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_mat3(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat3(
             data.chunks(cs * 9)
@@ -117,7 +117,7 @@ impl AccessorData {
         )
     }
 
-    fn into_mat4(component_type: ComponentType, data: &[u8]) -> Self {
+    fn into_mat4(component_type: &ComponentType, data: &[u8]) -> Self {
         let cs = component_size(component_type) as usize;
         AccessorData::Mat4(
             data.chunks(cs * 16)
@@ -131,7 +131,7 @@ impl AccessorData {
     }
 }
 
-fn component_size(ct: ComponentType) -> u8 {
+fn component_size(ct: &ComponentType) -> u8 {
     match ct {
         ComponentType::Byte | ComponentType::UnsignedByte => 1,
         ComponentType::Short | ComponentType::UnsignedShort => 2,
@@ -139,7 +139,7 @@ fn component_size(ct: ComponentType) -> u8 {
     }
 }
 
-fn read_component(component_type: ComponentType, chunk: &[u8]) -> f64 {
+fn read_component(component_type: &ComponentType, chunk: &[u8]) -> f64 {
     match component_type {
         ComponentType::Byte => f64::from(i8::from_le_bytes(chunk.try_into().unwrap())),
         ComponentType::UnsignedByte => f64::from(u8::from_le_bytes(chunk.try_into().unwrap())),
@@ -151,7 +151,7 @@ fn read_component(component_type: ComponentType, chunk: &[u8]) -> f64 {
 }
 
 fn read_components<const N: usize>(
-    component_type: ComponentType,
+    component_type: &ComponentType,
     cs: usize,
     chunk: &[u8],
 ) -> [f64; N] {
