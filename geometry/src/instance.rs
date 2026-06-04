@@ -54,6 +54,22 @@ impl Instance {
 }
 
 impl Hittable for Instance {
+    fn debug_hit_count(&self, ray: &Ray, interval: &Interval) -> u32 {
+        if self.get_bounds().hit(ray, interval).is_none() {
+            return 0;
+        }
+        let origin = mat4_transform_point(self.world_to_object, ray.origin);
+        let dir_transformed = mat4_transform_dir(self.world_to_object, ray.dir);
+        let dir_length = dir_transformed.length();
+        let transformed_ray = Ray::new(origin, dir_transformed.normalize());
+        let transformed_interval = Interval {
+            min: interval.min * dir_length,
+            max: interval.max * dir_length,
+        };
+        self.base
+            .debug_hit_count(&transformed_ray, &transformed_interval)
+    }
+
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         self.get_bounds().hit(ray, interval)?;
 

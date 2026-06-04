@@ -3,6 +3,8 @@
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss
 )]
+use std::f32::consts::PI;
+
 use clap::Parser;
 use geometry::Hittable;
 use parser::parse_glb;
@@ -18,6 +20,8 @@ mod progress;
 pub struct Args {
     #[arg(short, long, default_value = "10")]
     pub samples: u32,
+    #[arg(long, default_value = "false")]
+    pub debug_aabb: bool,
 }
 
 fn main() {
@@ -29,9 +33,16 @@ fn main() {
     materials.extend(chess_materials);
 
     objects[0].translate(&Vec3::new(10.0, 1.0, 2.0));
-    objects[0].rotate(&Vec3::new(0.0, 1.0, 0.0), -135.0);
+    objects[0].rotate(&Vec3::new(0.0, 1.0, 0.0), PI);
 
-    let camera = Camera::new(16.0 / 9.0, 1000, args.samples, materials, true);
+    let camera = Camera::new(
+        16.0 / 9.0,
+        1000,
+        args.samples,
+        materials,
+        true,
+        args.debug_aabb,
+    );
     println!("Rendering...");
 
     let start = std::time::Instant::now();

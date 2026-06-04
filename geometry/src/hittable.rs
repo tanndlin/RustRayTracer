@@ -10,6 +10,9 @@ pub trait Hittable {
     fn translate(&mut self, vec: &Vec3);
     fn scale(&mut self, vec: &Vec3);
     fn rotate(&mut self, axis: &Vec3, angle_rad: f32);
+    fn debug_hit_count(&self, _ray: &Ray, _interval: &Interval) -> u32 {
+        0
+    }
 }
 
 #[derive(Debug)]
@@ -64,6 +67,14 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.rotate(axis, angle_rad),
             HittableType::Mesh(mesh) => mesh.rotate(axis, angle_rad),
             HittableType::Instance(instance) => instance.rotate(axis, angle_rad),
+        }
+    }
+
+    fn debug_hit_count(&self, ray: &Ray, interval: &Interval) -> u32 {
+        match self {
+            HittableType::Sphere(_) | HittableType::Tri(_) => 0,
+            HittableType::Mesh(mesh) => mesh.debug_hit_count(ray, interval),
+            HittableType::Instance(instance) => instance.debug_hit_count(ray, interval),
         }
     }
 }

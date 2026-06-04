@@ -21,6 +21,7 @@ pub struct Camera {
     pixel00_loc: Vec3,
     total_pixels: u32,
     use_background_gradient: bool,
+    pub debug_aabb: bool,
 }
 
 impl Camera {
@@ -30,6 +31,7 @@ impl Camera {
         samples_per_pixel: u32,
         materials: Vec<MaterialType>,
         use_background_gradient: bool,
+        debug_aabb: bool,
     ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
@@ -87,6 +89,7 @@ impl Camera {
             pixel00_loc,
             total_pixels,
             use_background_gradient,
+            debug_aabb,
         }
     }
 
@@ -139,7 +142,26 @@ impl Camera {
                 let ray = Ray::new(self.look_from, ray_dir);
                 color = color + self.ray_color(ray, objects);
             }
-            tile_buffer.push(color / self.samples_per_pixel as f32);
+            let mut color = color / self.samples_per_pixel as f32;
+
+            if self.debug_aabb {
+                const AABB_ALPHA: f32 = 0.50;
+                const MAX_COUNT: f32 = 20.0;
+                let interval = Interval {
+                    min: 0.00001,
+                    max: f32::INFINITY,
+                };
+                let debug_ray = Ray::new(self.look_from, ray_dir);
+                let count = objects.debug_hit_count(&debug_ray, &interval);
+                if count > 0 {
+                    let t = (count as f32 / MAX_COUNT).min(1.0);
+                    // cyan (few nodes) → red (many nodes)
+                    let aabb_color = Color::new(t, 1.0 - t, 1.0 - t);
+                    color = color * (1.0 - AABB_ALPHA) + aabb_color * AABB_ALPHA;
+                }
+            }
+
+            tile_buffer.push(color);
         }
         tile_buffer
     }

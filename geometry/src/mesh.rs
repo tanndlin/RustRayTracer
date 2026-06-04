@@ -125,6 +125,10 @@ impl Hittable for Mesh {
         self.aabb.get_bounds()
     }
 
+    fn debug_hit_count(&self, ray: &Ray, interval: &Interval) -> u32 {
+        self.aabb.debug_hit_count(ray, interval)
+    }
+
     fn translate(&mut self, vec: &Vec3) {
         self.aabb.translate(vec);
     }

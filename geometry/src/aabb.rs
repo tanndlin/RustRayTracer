@@ -75,6 +75,37 @@ impl AABB {
 
         bounds
     }
+
+    pub fn debug_hit_count(&self, ray: &Ray, interval: &Interval) -> u32 {
+        if self.bounds.hit(ray, interval).is_none() {
+            return 0;
+        }
+        match &self.aabb_type {
+            AABBType::Recursive(c) => {
+                1 + c.left.debug_hit_count(ray, interval) + c.right.debug_hit_count(ray, interval)
+            }
+            AABBType::Leaf(children) => {
+                1 + children
+                    .iter()
+                    .map(|c| c.debug_hit_count(ray, interval))
+                    .sum::<u32>()
+            }
+        }
+    }
+
+    pub fn get_depth(&self) -> usize {
+        match &self.aabb_type {
+            AABBType::Recursive(c) => 1 + c.left.get_depth().max(c.right.get_depth()),
+            AABBType::Leaf(_) => 1,
+        }
+    }
+
+    pub fn get_max_leaf_size(&self) -> usize {
+        match &self.aabb_type {
+            AABBType::Recursive(c) => c.left.get_max_leaf_size().max(c.right.get_max_leaf_size()),
+            AABBType::Leaf(children) => children.len(),
+        }
+    }
 }
 
 impl Hittable for AABB {
