@@ -72,17 +72,16 @@ impl<TAlbedo: Albedo + Sync + Send, TORM: Albedo + Sync + Send> Material
         let orm = self.orm.sample(hit);
         let roughness = orm.y;
         let metallic = orm.z;
+        let cos_theta = (-ray.dir.dot(&shading_normal)).max(0.0);
+        let fresnel = schlick(cos_theta, 1.5);
 
-        let mut scatter_direction = if metallic > 0.0
-            && ((metallic - 1.0).abs() < 1e-6
-                || THREAD_RNG.with(|rng| rng.borrow_mut().random::<f32>() < metallic))
-        {
-            // Metallic: specular reflection tinted by albedo
-            ray.dir.reflect(&shading_normal)
-        } else {
-            // Dielectric: diffuse scatter
-            (shading_normal + Vec3::<Unnormalized>::random_in_unit_sphere()).normalize()
-        };
+        let reflect_prob = f32::max(fresnel, metallic);
+        let mut scatter_direction =
+            if THREAD_RNG.with(|rng| rng.borrow_mut().random::<f32>()) < reflect_prob {
+                ray.dir.reflect(&shading_normal)
+            } else {
+                (shading_normal + Vec3::<Unnormalized>::random_in_unit_sphere()).normalize()
+            };
 
         // Apply roughness to whichever scatter model was chosen
         if roughness > 0.0 {
@@ -128,4 +127,9 @@ impl From<LambertianBase<Color, Color>> for LambertianBase<Texture, Texture> {
             alpha: base.alpha,
         }
     }
+}
+
+fn schlick(cosine: f32, ior: f32) -> f32 {
+    let r0 = ((1.0 - ior) / (1.0 + ior)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cosine).powi(5)
 }
