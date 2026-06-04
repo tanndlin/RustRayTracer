@@ -93,7 +93,7 @@ impl<S> Vec3<S> {
         }
     }
 
-    pub fn cross<T>(u: Vec3<S>, v: Vec3<T>) -> Vec3<Unnormalized> {
+    pub fn cross<T>(u: &Vec3<S>, v: &Vec3<T>) -> Vec3<Unnormalized> {
         Vec3 {
             x: u.y * v.z - u.z * v.y,
             y: u.z * v.x - u.x * v.z,
@@ -213,6 +213,7 @@ impl<S> ops::Div<f32> for Vec3<S> {
 }
 
 impl Vec3<Unnormalized> {
+    #[must_use]
     pub fn normalize(&self) -> Vec3<Normalized> {
         let len_squared = self.length_squared();
         if len_squared > 1e-8 {
@@ -235,6 +236,7 @@ impl Vec3<Unnormalized> {
 }
 
 impl Vec3<Normalized> {
+    #[must_use]
     pub fn reflect(&self, normal: &Vec3<Normalized>) -> Vec3<Normalized> {
         let dot = self.dot(normal);
         Vec3 {

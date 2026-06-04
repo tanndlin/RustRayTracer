@@ -4,3 +4,11 @@ members = ["geometry", "gltf", "material", "parser","raytracer","util"]
 
 [profile.release]
 debug = true
+
+[workspace.lints.clippy]
+must_use_candidate = "allow"
+cast_possible_truncation = "allow"
+missing_errors_doc = "allow"
+missing_panics_doc = "allow"
+
+pedantic = { level = "warn", priority = -1 }

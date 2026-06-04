@@ -15,6 +15,7 @@ impl Albedo for Color {
 }
 
 impl Albedo for Texture {
+    #[allow(clippy::cast_sign_loss, clippy::cast_precision_loss)]
     fn sample(&self, hit: &HitResult) -> Color {
         let x = (hit.u * self.width as f32) as usize % self.width;
         let y = (hit.v * self.height as f32) as usize % self.height;

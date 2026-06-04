@@ -3,6 +3,9 @@ name = "geometry"
 version = "0.1.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 gltf = { path = "../gltf" }
 util = { path = "../util" }

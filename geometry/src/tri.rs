@@ -37,7 +37,7 @@ impl Tri {
     ) -> Self {
         let edge_ab = v1 - v0;
         let edge_ac = v2 - v0;
-        let face_normal = Vec3::cross(edge_ab, edge_ac);
+        let face_normal = Vec3::cross(&edge_ab, &edge_ac);
         let bounds = Bounds {
             min: Point::min(v0, Point::min(v1, v2)) - Point::new(1e-6, 1e-6, 1e-6),
             max: Point::max(v0, Point::max(v1, v2)) + Point::new(1e-6, 1e-6, 1e-6),
@@ -71,7 +71,7 @@ impl Tri {
     fn recompute_derived(&mut self) {
         self.edge_ab = self.v1 - self.v0;
         self.edge_ac = self.v2 - self.v0;
-        self.face_normal = Vec3::cross(self.edge_ab, self.edge_ac);
+        self.face_normal = Vec3::cross(&self.edge_ab, &self.edge_ac);
         self.bounds = Bounds {
             min: Point::min(self.v0, Point::min(self.v1, self.v2)) - Point::new(1e-6, 1e-6, 1e-6),
             max: Point::max(self.v0, Point::max(self.v1, self.v2)) + Point::new(1e-6, 1e-6, 1e-6),
@@ -82,7 +82,7 @@ impl Tri {
 impl Hittable for Tri {
     fn hit(&self, r: &Ray, interval: &Interval) -> Option<HitResult> {
         let ao = r.origin - self.v0;
-        let dao = Vec3::cross(ao, r.dir);
+        let dao = Vec3::cross(&ao, &r.dir);
 
         // Backface culling
         let determinant = -r.dir.dot(&self.face_normal);
@@ -153,7 +153,7 @@ impl Hittable for Tri {
             )
             .normalize();
             let handedness = t0[3]; // W should be constant across the triangle
-            let bitangent = Vec3::cross(normal, t) * handedness;
+            let bitangent = Vec3::cross(&normal, &t) * handedness;
             Some((t, bitangent.normalize()))
         } else {
             None

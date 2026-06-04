@@ -3,6 +3,9 @@ name = "raytracer"
 version = "1.0.0"
 edition = "2024"
 
+[lints]
+workspace = true
+
 [dependencies]
 geometry = { path = "../geometry" }
 material = { path = "../material" }

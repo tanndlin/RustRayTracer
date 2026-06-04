@@ -59,7 +59,7 @@ impl Hittable for Instance {
             return 0;
         }
         let origin = mat4_transform_point(self.world_to_object, ray.origin);
-        let dir_transformed = mat4_transform_dir(self.world_to_object, ray.dir);
+        let dir_transformed = mat4_transform_dir(self.world_to_object, &ray.dir);
         let dir_length = dir_transformed.length();
         let transformed_ray = Ray::new(origin, dir_transformed.normalize());
         let transformed_interval = Interval {
@@ -74,7 +74,7 @@ impl Hittable for Instance {
         self.get_bounds().hit(ray, interval)?;
 
         let origin = mat4_transform_point(self.world_to_object, ray.origin);
-        let dir_transformed = mat4_transform_dir(self.world_to_object, ray.dir);
+        let dir_transformed = mat4_transform_dir(self.world_to_object, &ray.dir);
         let dir_length = dir_transformed.length();
 
         let transformed_ray = Ray::new(origin, dir_transformed.normalize());
@@ -89,7 +89,7 @@ impl Hittable for Instance {
         hit.t /= dir_length;
 
         hit.point = mat4_transform_point(self.object_to_world, hit.point);
-        hit.normal = mat4_transform_dir(self.normal_matrix, hit.normal).normalize();
+        hit.normal = mat4_transform_dir(self.normal_matrix, &hit.normal).normalize();
         Some(hit)
     }
 
@@ -333,7 +333,7 @@ fn mat4_transform_point(m: [[f64; 4]; 4], p: Vec3) -> Vec3 {
     )
 }
 
-fn mat4_transform_dir<S>(m: [[f64; 4]; 4], d: Vec3<S>) -> Vec3<Unnormalized> {
+fn mat4_transform_dir<S>(m: [[f64; 4]; 4], d: &Vec3<S>) -> Vec3<Unnormalized> {
     Vec3::new(
         (m[0][0] * f64::from(d.x) + m[0][1] * f64::from(d.y) + m[0][2] * f64::from(d.z)) as f32,
         (m[1][0] * f64::from(d.x) + m[1][1] * f64::from(d.y) + m[1][2] * f64::from(d.z)) as f32,

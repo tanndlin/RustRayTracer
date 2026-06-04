@@ -52,8 +52,8 @@ impl Camera {
 
         // Calculate the u,v,w unit basis vectors for the camera coordinate frame.
         let w = (look_from - look_at).normalize();
-        let u = Vec3::cross(up, w).normalize();
-        let v = Vec3::cross(w, u);
+        let u = Vec3::cross(&up, &w).normalize();
+        let v = Vec3::cross(&w, &u);
 
         // Calculate the vectors across the horizontal and down the vertical viewport edges.
         let viewport_u = u * viewport_width; // Vector across viewport horizontal edge

@@ -19,6 +19,7 @@ impl Mesh {
         Mesh { aabb }
     }
 
+    #[allow(clippy::cast_sign_loss)]
     pub fn from_gltf_mesh(
         gltf_mesh: &GltfMesh,
         gltf_data: &GltfData,
