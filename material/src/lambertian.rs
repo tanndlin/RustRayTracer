@@ -97,7 +97,7 @@ impl<TAlbedo: Albedo + Sync + Send, TORM: Albedo + Sync + Send> Material
         }
 
         // Remove shadow acne
-        let origin = hit.point + hit.normal * 1e-4;
+        let origin = hit.point + hit.normal * (hit.t * 1e-4).max(1e-4);
         let scattered = Ray::new(origin, scatter_direction);
         (scattered, self.albedo.sample(hit))
     }

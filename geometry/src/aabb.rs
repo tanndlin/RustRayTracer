@@ -63,14 +63,14 @@ impl AABB {
         }
     }
 
-    fn calc_bounds(tris: &[HittableType]) -> Bounds {
+    fn calc_bounds(hittables: &[HittableType]) -> Bounds {
         let mut bounds = Bounds {
             min: Vec3::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
             max: Vec3::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
         };
 
-        for tri in tris {
-            bounds.expand_to_contain(tri.get_bounds());
+        for tri in hittables {
+            bounds.expand_to_contain(tri);
         }
 
         bounds
@@ -111,6 +111,7 @@ impl AABB {
 impl Hittable for AABB {
     fn hit(&self, ray: &Ray, interval: &Interval) -> Option<HitResult> {
         self.bounds.hit(ray, interval)?;
+
         match &self.aabb_type {
             AABBType::Recursive(c) => c.hit(ray, interval),
             AABBType::Leaf(children) => {

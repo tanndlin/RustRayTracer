@@ -1,11 +1,14 @@
-use std::{io::Read, sync::Arc};
+use std::{io::Read, path::Path};
 
 use geometry::HittableType;
-use gltf::{GltfData, Material, MimeType};
-use material::{Dielectric, LambertianBase, MaterialType, Texture};
-use util::{Color, Vec3};
+use gltf::{GltfData, MimeType};
+use material::{MaterialType, Texture};
+use util::Color;
 
-use crate::glb::types::{Chunk, ChunkType, GlbHeader};
+use crate::{
+    glb::types::{Chunk, ChunkType, GlbHeader},
+    gltf_parser::assemble_scene,
+};
 
 pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<MaterialType>) {
     let mut buffer = vec![];
@@ -51,131 +54,13 @@ pub fn parse_glb(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<Mater
         .iter()
         .find(|chunk| matches!(chunk.r#type, ChunkType::Binary))
         .expect("GLB file must contain a binary chunk");
+    let binary_chunk_data = &binary_chunk.data;
+    let binary_chunk = vec![binary_chunk_data.as_slice()];
 
-    assemble_scene(gltf_data, binary_chunk, mat_offset)
-}
-
-fn assemble_scene(
-    mut gltf_data: GltfData,
-    binary_chunk: &Chunk,
-    mat_offset: usize,
-) -> (Vec<HittableType>, Vec<MaterialType>) {
-    let scene = gltf_data
-        .scenes
-        .get(gltf_data.scene)
-        .expect("Scene index out of bounds");
-
-    let instance_bases = gltf_data
-        .meshes
-        .iter()
-        .map(|mesh| {
-            Arc::new(HittableType::from_gltf_mesh(
-                mesh,
-                &gltf_data,
-                &binary_chunk.data,
-                mat_offset,
-            ))
-        })
-        .collect::<Vec<_>>();
-
-    println!("Parsed {} meshes", instance_bases.len());
-
-    // Nodes are the instances of the meshes
-    let nodes = scene
-        .nodes
-        .iter()
-        .map(|&node_index| {
-            gltf_data
-                .nodes
-                .get(node_index)
-                .expect("Node index out of bounds")
-        })
-        .collect::<Vec<_>>();
-
-    let instances: Vec<HittableType> = nodes
-        .iter()
-        .map(|node| {
-            HittableType::Instance(Box::new(
-                (instance_bases.as_slice(), (*node).clone()).into(),
-            ))
-        })
-        .collect();
-
-    let mut materials = vec![];
-    let materials_data = std::mem::take(&mut gltf_data.materials);
-    for mat in materials_data {
-        let Material {
-            name,
-            normal_texture,
-            pbr_metallic_roughness: pbr,
-            ..
-        } = mat;
-
-        let pbr = pbr.unwrap();
-
-        let normal_texture =
-            normal_texture.map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
-
-        let roughness_texture = pbr
-            .metallic_roughness_texture
-            .map(|tex| load_texture(&binary_chunk.data, &gltf_data, tex.index));
-
-        let material = {
-            // Is glass
-            if let Some(transmission_factor) =
-                mat.extensions.transmission.map(|t| t.transmission_factor)
-            {
-                let ior = mat.extensions.ior.map_or(1.5, |i| i.ior);
-                let albedo = pbr.base_color_factor.unwrap_or(vec![1.0, 1.0, 1.0, 1.0]);
-                MaterialType::Dielectric(Dielectric::new(
-                    name,
-                    Some(albedo[..3].into()),
-                    ior as f32,
-                    transmission_factor as f32,
-                ))
-            } else {
-                // Is lambertian
-                if let Some(tex) = pbr.base_color_texture {
-                    let albedo = load_texture(&binary_chunk.data, &gltf_data, tex.index);
-                    let roughness = roughness_texture.unwrap_or({
-                        let pixels = albedo
-                            .data
-                            .iter()
-                            .map(|_| pbr.roughness_factor.map_or(0.8, |r| r as f32))
-                            .map(|r| Vec3::new(0.0, r, 0.0))
-                            .collect();
-
-                        Texture {
-                            data: pixels,
-                            width: albedo.width,
-                            height: albedo.height,
-                        }
-                    });
-
-                    MaterialType::TextureLambertian(LambertianBase {
-                        name,
-                        albedo,
-                        normal_texture,
-                        orm: roughness,
-                        alpha: 1.0,
-                    })
-                } else {
-                    let rgba = pbr.base_color_factor.unwrap();
-                    MaterialType::Lambertian(LambertianBase {
-                        name,
-                        albedo: rgba[..3].into(),
-                        normal_texture,
-                        orm: Vec3::new(1.0, pbr.roughness_factor.unwrap() as f32, 0.0),
-                        alpha: rgba[3] as f32,
-                    })
-                }
-            }
-        };
-
-        materials.push(material);
-    }
-
-    (instances, materials)
+    let base_path = Path::new(path)
+        .parent()
+        .expect("Failed to get parent directory of .glb file");
+    assemble_scene(gltf_data, &binary_chunk, mat_offset, base_path)
 }
 
 fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
@@ -190,17 +75,49 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
     }
 }
 
-fn load_texture(binary: &[u8], gltf_data: &GltfData, tex_index: usize) -> Texture {
+// TODO: I think this flow is copied somewhere
+pub fn load_texture(
+    binary: &[&[u8]],
+    gltf_data: &GltfData,
+    tex_index: usize,
+    base_path: &Path,
+) -> Texture {
     let texture = gltf_data.textures.get(tex_index).unwrap();
     let image = gltf_data.images.get(texture.source).unwrap();
-    let buffer_view = gltf_data.buffer_views.get(image.buffer_view).unwrap();
-    let data = &binary[buffer_view.byte_offset..buffer_view.byte_offset + buffer_view.byte_length];
 
-    let image = match image.mime_type {
-        MimeType::ImagePng => image::load_from_memory_with_format(data, image::ImageFormat::Png)
+    let (data, mime_type) = if let Some(uri) = &image.uri {
+        let texture_path = base_path.join(uri);
+        let data = std::fs::read(&texture_path).expect("Failed to read texture file");
+        // Get the mime type from the file extension
+        let mime_type = match texture_path
+            .extension()
+            .and_then(|ext| ext.to_str())
+            .map(str::to_lowercase)
+        {
+            Some(ref ext) if ext == "png" => MimeType::ImagePng,
+            Some(ref ext) if ext == "jpg" || ext == "jpeg" => MimeType::ImageJpeg,
+            other => panic!("Unknown texture file extension: {other:?}"),
+        };
+
+        (data, mime_type)
+    } else if let Some(buffer_view_index) = image.buffer_view {
+        // If the image is stored in a buffer view, load it from the binary chunk
+        let buffer_view = gltf_data.buffer_views.get(buffer_view_index).unwrap();
+        let byte_offset = buffer_view.byte_offset.unwrap_or(0);
+        let data =
+            binary[buffer_view.buffer][byte_offset..byte_offset + buffer_view.byte_length].to_vec();
+        // Clone the mime type to return an owned MimeType (not a reference)
+        let mime_type = image.mime_type.expect("Image mime type is missing");
+        (data, mime_type)
+    } else {
+        panic!("Image must have either a URI or a buffer view");
+    };
+
+    let image = match mime_type {
+        MimeType::ImagePng => image::load_from_memory_with_format(&data, image::ImageFormat::Png)
             .expect("Failed to load PNG texture")
             .to_rgba8(),
-        MimeType::ImageJpeg => image::load_from_memory_with_format(data, image::ImageFormat::Jpeg)
+        MimeType::ImageJpeg => image::load_from_memory_with_format(&data, image::ImageFormat::Jpeg)
             .expect("Failed to load JPEG texture")
             .to_rgba8(),
     };

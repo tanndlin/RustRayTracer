@@ -1,5 +1,7 @@
 use util::{Interval, Point, Ray};
 
+use crate::{Hittable, HittableType};
+
 pub enum Axis {
     X,
     Y,
@@ -13,9 +15,10 @@ pub struct Bounds {
 }
 
 impl Bounds {
-    pub fn expand_to_contain(&mut self, get_bounds: &Bounds) {
-        self.min = Point::min(self.min, get_bounds.min);
-        self.max = Point::max(self.max, get_bounds.max);
+    pub fn expand_to_contain(&mut self, boundable: &HittableType) {
+        let Bounds { min, max } = boundable.get_bounds();
+        self.min = Point::min(&self.min, min);
+        self.max = Point::max(&self.max, max);
     }
 
     pub fn longest_axis(&self) -> Axis {
@@ -73,5 +76,18 @@ impl Bounds {
                 max: t_max,
             })
         }
+    }
+}
+
+impl From<&Vec<HittableType>> for Bounds {
+    fn from(objects: &Vec<HittableType>) -> Self {
+        let mut bounds = Bounds {
+            min: Point::new(f32::INFINITY, f32::INFINITY, f32::INFINITY),
+            max: Point::new(f32::NEG_INFINITY, f32::NEG_INFINITY, f32::NEG_INFINITY),
+        };
+        for obj in objects {
+            bounds.expand_to_contain(obj);
+        }
+        bounds
     }
 }

@@ -3,6 +3,7 @@ use util::{Color, HitResult, Normalized, Ray, THREAD_RNG, Unnormalized, Vec3};
 
 use crate::material_trait::Material;
 
+#[derive(Debug)]
 pub struct Dielectric {
     name: String,
     albedo: Color,
@@ -11,35 +12,35 @@ pub struct Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit_record: &HitResult) -> (Ray, Color) {
+    fn scatter(&self, ray: &Ray, hit: &HitResult) -> (Ray, Color) {
         if random_double() > self.transmission_factor {
             // Treat as opaque lambertian
-            let mut scatter_dir = hit_record.normal + Vec3::<Unnormalized>::random_in_unit_sphere();
-            if scatter_dir.dot(&hit_record.normal) < 0.0 {
+            let mut scatter_dir = hit.normal + Vec3::<Unnormalized>::random_in_unit_sphere();
+            if scatter_dir.dot(&hit.normal) < 0.0 {
                 scatter_dir = -scatter_dir;
             }
-            let origin = hit_record.point + hit_record.normal * 1e-4;
+            let origin = hit.point + hit.normal * (hit.t * 1e-4).max(1e-4);
             return (Ray::new(origin, scatter_dir.normalize()), self.albedo);
         }
 
-        let ri = if hit_record.front_face {
+        let ri = if hit.front_face {
             1.0 / self.refraction_index
         } else {
             self.refraction_index
         };
 
         let unit_dir = ray.dir;
-        let cos_theta = f32::min(-unit_dir.dot(&hit_record.normal), 1.0);
+        let cos_theta = f32::min(-unit_dir.dot(&hit.normal), 1.0);
         let sin_theta = f32::sqrt(1.0 - cos_theta * cos_theta);
 
         let cannot_refract = ri * sin_theta > 1.0;
         let dir = if cannot_refract || reflectance(cos_theta, ri) > random_double() {
-            unit_dir.reflect(&hit_record.normal)
+            unit_dir.reflect(&hit.normal)
         } else {
-            Self::refract(unit_dir, hit_record.normal, ri)
+            Self::refract(unit_dir, hit.normal, ri)
         };
 
-        let origin = hit_record.point + dir * 1e-4;
+        let origin = hit.point + dir * (hit.t * 1e-4).max(1e-4);
         let new_ray = Ray::new(origin, dir);
 
         (new_ray, self.albedo)

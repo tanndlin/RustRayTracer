@@ -23,7 +23,7 @@ impl Mesh {
     pub fn from_gltf_mesh(
         gltf_mesh: &GltfMesh,
         gltf_data: &GltfData,
-        binary: &[u8],
+        binary: &[&[u8]],
         mat_offset: usize,
     ) -> Self {
         let mut children = Vec::new();
@@ -109,6 +109,12 @@ impl Mesh {
                     tan,
                     primitive.material.map(|m| m + mat_offset),
                 );
+
+                // Check for degen triangles
+                if tri.edge_ab.length_squared() < 1e-12 || tri.edge_ac.length_squared() < 1e-12 {
+                    return;
+                }
+
                 children.push(HittableType::Tri(tri));
             });
         }

@@ -2,6 +2,7 @@ use util::{Color, HitResult, Ray};
 
 use crate::material_trait::Material;
 
+#[derive(Debug)]
 pub struct Emissive {
     pub name: String,
     pub intensity: f32,

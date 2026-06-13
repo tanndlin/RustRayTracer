@@ -35,15 +35,10 @@ impl Camera {
     ) -> Self {
         let image_height = (image_width as f32 / aspect_ratio) as u32;
 
-        let look_from = Point::new(-5.0, 2.0, -2.0);
+        let look_from = Point::new(25.0, 20.0, -50.0);
         let look_at = Point::new(0.0, 0.0, 0.0);
         let up = Vec3::new(0.0, 1.0, 0.0).normalize();
-        let fov = 55;
-
-        // let look_from = Vec3::new(-50.0, 25.0, -2.0);
-        // let look_at = Vec3::new(0.0, 0.0, 0.0);
-        // let up = Vec3::new(0.0, 1.0, 0.0);
-        // let fov = 10;
+        let fov = 35;
 
         let theta = degrees_to_radians(fov);
         let h = f32::tan(theta / 2.0);
@@ -133,6 +128,7 @@ impl Camera {
         for pixel_index in start_pixel..end_pixel {
             let i = pixel_index % self.image_width;
             let j = pixel_index / self.image_width;
+
             let pixel_center =
                 self.pixel00_loc + self.pixel_delta_u * i as f32 + self.pixel_delta_v * j as f32;
 
@@ -146,11 +142,12 @@ impl Camera {
 
             if self.debug_aabb {
                 const AABB_ALPHA: f32 = 0.50;
-                const MAX_COUNT: f32 = 20.0;
+                const MAX_COUNT: f32 = 1000.0;
                 let interval = Interval {
                     min: 0.00001,
                     max: f32::INFINITY,
                 };
+
                 let debug_ray = Ray::new(self.look_from, ray_dir);
                 let count = objects.debug_hit_count(&debug_ray, &interval);
                 if count > 0 {

@@ -93,7 +93,7 @@ pub struct Asset {
 pub struct BufferView {
     pub buffer: usize,
     pub byte_length: usize,
-    pub byte_offset: usize,
+    pub byte_offset: Option<usize>,
     pub target: Option<usize>,
 }
 
@@ -101,17 +101,20 @@ pub struct BufferView {
 #[serde(rename_all = "camelCase")]
 pub struct Buffer {
     byte_length: usize,
+    pub uri: Option<String>,
 }
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Image {
-    pub buffer_view: usize,
-    pub mime_type: MimeType,
-    pub name: String,
+    // Should either have buffer_view, mime_type, and name; or uri
+    pub buffer_view: Option<usize>,
+    pub mime_type: Option<MimeType>,
+    pub name: Option<String>,
+    pub uri: Option<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum MimeType {
     ImagePng,
     ImageJpeg,
@@ -121,7 +124,7 @@ impl<'de> Deserialize<'de> for MimeType {
     fn deserialize<D: serde::Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
         match String::deserialize(d)?.as_str() {
             "image/png" => Ok(MimeType::ImagePng),
-            "image/jpeg" => Ok(MimeType::ImageJpeg),
+            "image/jpg" | "image/jpeg" => Ok(MimeType::ImageJpeg),
             other => Err(serde::de::Error::custom(format!(
                 "Unknown mime type: {other}"
             ))),
@@ -167,7 +170,7 @@ pub struct Texture {
 #[serde(rename_all = "camelCase")]
 pub struct PbrMetallicRoughness {
     pub base_color_texture: Option<Texture>,
-    metallic_factor: Option<usize>,
+    metallic_factor: Option<f64>,
     pub metallic_roughness_texture: Option<Texture>,
     pub base_color_factor: Option<Vec<f64>>,
     pub roughness_factor: Option<f64>,
@@ -202,6 +205,8 @@ pub struct Node {
     pub rotation: Option<Vec<f64>>,
     pub scale: Option<Vec<f64>>,
     pub translation: Option<Vec<f64>>,
+    pub children: Option<Vec<usize>>,
+    pub matrix: Option<[f64; 16]>,
 }
 
 #[derive(Deserialize, Debug)]

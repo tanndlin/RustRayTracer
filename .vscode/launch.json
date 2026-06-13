@@ -12,7 +12,8 @@
                 "args": [
                     "build",
                     "--bin=raytracer",
-                    "--package=raytracer"
+                    "--package=raytracer",
+                    "--no-default-features"
                 ],
                 "filter": {
                     "name": "raytracer",

@@ -3,7 +3,6 @@
     clippy::cast_possible_truncation,
     clippy::cast_precision_loss
 )]
-use std::f32::consts::PI;
 
 use clap::Parser;
 use geometry::Hittable;
@@ -27,13 +26,10 @@ pub struct Args {
 fn main() {
     let args = Args::parse();
 
-    let (mut objects, mut materials) = parse_glb("objs/F16/F16Shaded.glb", 0);
-    let (chess_objects, chess_materials) = parse_glb("objs/Chess/Chess.glb", materials.len());
-    objects.extend(chess_objects);
-    materials.extend(chess_materials);
+    let (mut objects, materials) = parse_glb("objs/Titanic/combined.glb", 0);
 
-    objects[0].translate(&Vec3::new(10.0, 1.0, 2.0));
-    objects[0].rotate(&Vec3::new(0.0, 1.0, 0.0), PI);
+    objects[0].scale(&Vec3::new(0.25, 0.25, 0.25));
+    objects[0].translate(&Vec3::new(-30.0, -5.0, 0.0));
 
     let camera = Camera::new(
         16.0 / 9.0,

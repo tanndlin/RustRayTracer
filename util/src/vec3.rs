@@ -75,7 +75,7 @@ impl<S> Vec3<S> {
         self.x * other.x + self.y * other.y + self.z * other.z
     }
 
-    pub fn min(u: Vec3, v: Vec3) -> Vec3 {
+    pub fn min(u: &Vec3, v: &Vec3) -> Vec3 {
         Vec3 {
             x: u.x.min(v.x),
             y: u.y.min(v.y),
@@ -84,7 +84,7 @@ impl<S> Vec3<S> {
         }
     }
 
-    pub fn max(u: Vec3, v: Vec3) -> Vec3 {
+    pub fn max(u: &Vec3, v: &Vec3) -> Vec3 {
         Vec3 {
             x: u.x.max(v.x),
             y: u.y.max(v.y),
@@ -226,7 +226,7 @@ impl Vec3<Unnormalized> {
             }
         } else {
             Vec3 {
-                x: 0.0,
+                x: 1.0,
                 y: 0.0,
                 z: 0.0,
                 _state: PhantomData,

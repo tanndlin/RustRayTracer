@@ -1,7 +1,9 @@
 use gltf::{GltfData, GltfMesh};
 use util::{HitResult, Interval, Ray, Vec3};
 
-use crate::{bounds::Bounds, instance::Instance, mesh::Mesh, sphere::Sphere, tri::Tri};
+use crate::{
+    bounds::Bounds, instance::Instance, mesh::Mesh, parent::Parent, sphere::Sphere, tri::Tri,
+};
 
 #[allow(dead_code)]
 pub trait Hittable {
@@ -22,6 +24,7 @@ pub enum HittableType {
     Tri(Tri),
     Mesh(Mesh),
     Instance(Box<Instance>),
+    Parent(Box<Parent>),
 }
 
 impl Hittable for HittableType {
@@ -31,6 +34,7 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.hit(ray, interval),
             HittableType::Mesh(mesh) => mesh.hit(ray, interval),
             HittableType::Instance(instance) => instance.hit(ray, interval),
+            HittableType::Parent(parent) => parent.hit(ray, interval),
         }
     }
 
@@ -40,6 +44,7 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.get_bounds(),
             HittableType::Mesh(mesh) => mesh.get_bounds(),
             HittableType::Instance(instance) => instance.get_bounds(),
+            HittableType::Parent(parent) => parent.get_bounds(),
         }
     }
 
@@ -49,6 +54,7 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.translate(vec),
             HittableType::Mesh(mesh) => mesh.translate(vec),
             HittableType::Instance(instance) => instance.translate(vec),
+            HittableType::Parent(parent) => parent.translate(vec),
         }
     }
 
@@ -58,6 +64,7 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.scale(vec),
             HittableType::Mesh(mesh) => mesh.scale(vec),
             HittableType::Instance(instance) => instance.scale(vec),
+            HittableType::Parent(parent) => parent.scale(vec),
         }
     }
 
@@ -67,6 +74,7 @@ impl Hittable for HittableType {
             HittableType::Tri(tri) => tri.rotate(axis, angle_rad),
             HittableType::Mesh(mesh) => mesh.rotate(axis, angle_rad),
             HittableType::Instance(instance) => instance.rotate(axis, angle_rad),
+            HittableType::Parent(parent) => parent.rotate(axis, angle_rad),
         }
     }
 
@@ -75,6 +83,7 @@ impl Hittable for HittableType {
             HittableType::Sphere(_) | HittableType::Tri(_) => 0,
             HittableType::Mesh(mesh) => mesh.debug_hit_count(ray, interval),
             HittableType::Instance(instance) => instance.debug_hit_count(ray, interval),
+            HittableType::Parent(parent) => parent.debug_hit_count(ray, interval),
         }
     }
 }
@@ -83,7 +92,7 @@ impl HittableType {
     pub fn from_gltf_mesh(
         gltf_mesh: &GltfMesh,
         gltf_data: &GltfData,
-        binary: &[u8],
+        binary: &[&[u8]],
         mat_offset: usize,
     ) -> Self {
         HittableType::Mesh(Mesh::from_gltf_mesh(

@@ -1,15 +1,15 @@
 use crate::gltf::{Accessor, AccessorType, ComponentType, GltfData};
 
 impl Accessor {
-    pub fn get_data(&self, gltf_data: &GltfData, binary: &[u8]) -> AccessorData {
+    pub fn get_data(&self, gltf_data: &GltfData, binary: &[&[u8]]) -> AccessorData {
         let buffer_view = &gltf_data.buffer_views[self.buffer_view];
 
-        let byte_offset = buffer_view.byte_offset + self.byte_offset.unwrap_or(0);
+        let byte_offset = buffer_view.byte_offset.unwrap_or(0) + self.byte_offset.unwrap_or(0);
         let byte_length = self.count
             * self.r#type.component_count() as usize
             * component_size(&self.component_type) as usize;
 
-        let data = &binary[byte_offset..(byte_offset + byte_length)];
+        let data = &binary[buffer_view.buffer][byte_offset..(byte_offset + byte_length)];
 
         AccessorData::from((&self.r#type, &self.component_type, data))
     }

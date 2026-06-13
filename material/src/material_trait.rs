@@ -10,6 +10,7 @@ pub trait Material: Send + Sync {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub enum MaterialType {
     Lambertian(LambertianBase<Color, Color>),
     TextureLambertian(LambertianBase<Texture, Texture>),

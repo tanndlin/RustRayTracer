@@ -18,8 +18,8 @@ pub struct Tri {
     pub uvs: Option<(Vec3, Vec3, Vec3)>,
     tangents: Option<[[f32; 4]; 3]>,
     face_normal: Vec3,
-    edge_ab: Vec3,
-    edge_ac: Vec3,
+    pub edge_ab: Vec3,
+    pub edge_ac: Vec3,
     bounds: Bounds,
 
     material_index: Option<usize>,
@@ -39,14 +39,13 @@ impl Tri {
         let edge_ac = v2 - v0;
         let face_normal = Vec3::cross(&edge_ab, &edge_ac);
         let bounds = Bounds {
-            min: Point::min(v0, Point::min(v1, v2)) - Point::new(1e-6, 1e-6, 1e-6),
-            max: Point::max(v0, Point::max(v1, v2)) + Point::new(1e-6, 1e-6, 1e-6),
+            min: Point::min(&v0, &Point::min(&v1, &v2)) - Point::new(1e-6, 1e-6, 1e-6),
+            max: Point::max(&v0, &Point::max(&v1, &v2)) + Point::new(1e-6, 1e-6, 1e-6),
         };
 
-        let tangents = if tangents.is_none()
-            && let Some(uvs) = uvs
-        {
-            // Tangent is same for all vertices since its a flat face
+        let tangents = if let Some(t) = tangents {
+            Some(t)
+        } else if let Some(uvs) = uvs {
             let t = compute_tangent(v0, v1, v2, uvs.0, uvs.1, uvs.2);
             Some([t, t, t])
         } else {
@@ -73,8 +72,10 @@ impl Tri {
         self.edge_ac = self.v2 - self.v0;
         self.face_normal = Vec3::cross(&self.edge_ab, &self.edge_ac);
         self.bounds = Bounds {
-            min: Point::min(self.v0, Point::min(self.v1, self.v2)) - Point::new(1e-6, 1e-6, 1e-6),
-            max: Point::max(self.v0, Point::max(self.v1, self.v2)) + Point::new(1e-6, 1e-6, 1e-6),
+            min: Point::min(&self.v0, &Point::min(&self.v1, &self.v2))
+                - Point::new(1e-6, 1e-6, 1e-6),
+            max: Point::max(&self.v0, &Point::max(&self.v1, &self.v2))
+                + Point::new(1e-6, 1e-6, 1e-6),
         };
     }
 }
@@ -84,7 +85,7 @@ impl Hittable for Tri {
         let ao = r.origin - self.v0;
         let dao = Vec3::cross(&ao, &r.dir);
 
-        // Backface culling
+        // Parallel check
         let determinant = -r.dir.dot(&self.face_normal);
         // // TODO: Respect double_sided on the material
         if determinant.abs() < 1e-6 {
@@ -101,20 +102,20 @@ impl Hittable for Tri {
             return None;
         }
 
-        let u = self.edge_ac.dot(&dao) * inv_det;
-        if !(0.0..=1.0).contains(&u) {
+        let bary_u = self.edge_ac.dot(&dao) * inv_det;
+        if !(0.0..=1.0).contains(&bary_u) {
             return None;
         }
 
-        let v = -self.edge_ab.dot(&dao) * inv_det;
-        if v < 0.0 || u + v > 1.0 {
+        let bary_v = -self.edge_ab.dot(&dao) * inv_det;
+        if bary_v < 0.0 || bary_u + bary_v > 1.0 {
             return None;
         }
 
         let interpolated_normal = match self.normals {
             Some((n0, n1, n2)) => {
-                let w = 1.0 - u - v;
-                let normal = n0 * w + n1 * u + n2 * v;
+                let w = 1.0 - bary_u - bary_v;
+                let normal = n0 * w + n1 * bary_u + n2 * bary_v;
                 normal.normalize()
             }
             None => self.face_normal.normalize(),
@@ -133,8 +134,8 @@ impl Hittable for Tri {
 
         let point = r.at(dst);
         let (u, v) = if let Some((uv0, uv1, uv2)) = self.uvs {
-            let w = 1.0 - u - v;
-            let uv = uv0 * w + uv1 * u + uv2 * v;
+            let w = 1.0 - bary_u - bary_v;
+            let uv = uv0 * w + uv1 * bary_u + uv2 * bary_v;
             (uv.x, uv.y)
         } else {
             (0.0, 0.0)
@@ -145,11 +146,11 @@ impl Hittable for Tri {
             let t1 = tangents[1];
             let t2 = tangents[2];
 
-            let w = 1.0 - u - v;
+            let w = 1.0 - bary_u - bary_v;
             let t = Vec3::new(
-                t0[0] * w + t1[0] * u + t2[0] * v,
-                t0[1] * w + t1[1] * u + t2[1] * v,
-                t0[2] * w + t1[2] * u + t2[2] * v,
+                t0[0] * w + t1[0] * bary_u + t2[0] * bary_v,
+                t0[1] * w + t1[1] * bary_u + t2[1] * bary_v,
+                t0[2] * w + t1[2] * bary_u + t2[2] * bary_v,
             )
             .normalize();
             let handedness = t0[3]; // W should be constant across the triangle
@@ -205,7 +206,11 @@ fn compute_tangent(v0: Vec3, v1: Vec3, v2: Vec3, uv0: Vec3, uv1: Vec3, uv2: Vec3
     let duv1 = uv1 - uv0;
     let duv2 = uv2 - uv0;
 
-    let f = 1.0 / (duv1.x * duv2.y - duv2.x * duv1.y);
+    let denom = duv1.x * duv2.y - duv2.x * duv1.y;
+    if denom.abs() < 1e-6 {
+        return [1.0, 0.0, 0.0, 1.0]; // fallback tangent
+    }
+    let f = 1.0 / denom;
 
     let tangent = Vec3::new(
         f * (duv2.y * edge1.x - duv1.y * edge2.x),
