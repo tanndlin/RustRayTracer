@@ -31,7 +31,7 @@ pub fn parse_gltf(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<Mate
 }
 
 pub fn assemble_scene(
-    mut gltf_data: GltfData,
+    gltf_data: GltfData,
     binary_chunk: &[&[u8]],
     mat_offset: usize,
     base_path: &Path,
@@ -79,6 +79,16 @@ pub fn assemble_scene(
 
     println!("Parsed {} instances", instances.len());
 
+    let materials = parse_materials(gltf_data, binary_chunk, base_path);
+
+    (instances, materials)
+}
+
+fn parse_materials(
+    mut gltf_data: GltfData,
+    binary_chunk: &[&[u8]],
+    base_path: &Path,
+) -> Vec<MaterialType> {
     let mut materials = vec![];
     let materials_data = std::mem::take(&mut gltf_data.materials);
     for mat in materials_data {
@@ -152,8 +162,7 @@ pub fn assemble_scene(
 
         materials.push(material);
     }
-
-    (instances, materials)
+    materials
 }
 
 fn parse_parent(node: &Node, gltf_data: &GltfData, instance_bases: &[Arc<HittableType>]) -> Parent {
