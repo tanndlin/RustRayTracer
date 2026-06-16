@@ -68,7 +68,6 @@ pub fn assemble_scene(
         })
         .collect::<Vec<_>>();
 
-    // TODO: This needs to parse the children tree
     let instances: Vec<HittableType> = nodes
         .iter()
         .filter_map(|node| {

@@ -75,7 +75,6 @@ fn parse_chunk(buffer: &[u8], offset: usize) -> Chunk {
     }
 }
 
-// TODO: I think this flow is copied somewhere
 pub fn load_texture(
     binary: &[&[u8]],
     gltf_data: &GltfData,
