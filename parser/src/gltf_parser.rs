@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, path::Path, sync::Arc};
 
 use geometry::{HittableType, Instance, Parent};
-use gltf::{GltfData, Material, Node};
+use gltf::{GltfData, Material, Node, PbrMetallicRoughness};
 use material::{Dielectric, LambertianBase, MaterialType, Texture};
 use util::Vec3;
 
@@ -89,80 +89,115 @@ fn parse_materials(
     binary_chunk: &[&[u8]],
     base_path: &Path,
 ) -> Vec<MaterialType> {
-    let mut materials = vec![];
     let materials_data = std::mem::take(&mut gltf_data.materials);
-    for mat in materials_data {
-        let Material {
+
+    materials_data
+        .into_iter()
+        .map(|mat| build_material(mat, &gltf_data, binary_chunk, base_path))
+        .collect()
+}
+
+fn build_material(
+    mat: Material,
+    gltf_data: &GltfData,
+    binary_chunk: &[&[u8]],
+    base_path: &Path,
+) -> MaterialType {
+    let Material {
+        name,
+        normal_texture,
+        pbr_metallic_roughness: pbr,
+        extensions,
+        ..
+    } = mat;
+    let pbr = pbr.unwrap();
+    let load = |index| load_texture(binary_chunk, gltf_data, index, base_path);
+    let normal_texture = normal_texture.map(|tex| load(tex.index));
+
+    if let Some(transmission_factor) = extensions.transmission.map(|t| t.transmission_factor) {
+        return build_dielectric(
             name,
-            normal_texture,
-            pbr_metallic_roughness: pbr,
-            ..
-        } = mat;
-
-        let pbr = pbr.unwrap();
-
-        let normal_texture =
-            normal_texture.map(|tex| load_texture(binary_chunk, &gltf_data, tex.index, base_path));
-
-        let roughness_texture = pbr
-            .metallic_roughness_texture
-            .map(|tex| load_texture(binary_chunk, &gltf_data, tex.index, base_path));
-
-        let material = {
-            // Is glass
-            if let Some(transmission_factor) =
-                mat.extensions.transmission.map(|t| t.transmission_factor)
-            {
-                let ior = mat.extensions.ior.map_or(1.5, |i| i.ior);
-                let albedo = pbr.base_color_factor.unwrap_or(vec![1.0, 1.0, 1.0, 1.0]);
-                MaterialType::Dielectric(Dielectric::new(
-                    name,
-                    Some(albedo[..3].into()),
-                    ior as f32,
-                    transmission_factor as f32,
-                ))
-            } else {
-                // Is lambertian
-                if let Some(tex) = pbr.base_color_texture {
-                    let albedo = load_texture(binary_chunk, &gltf_data, tex.index, base_path);
-                    let roughness = roughness_texture.unwrap_or({
-                        let pixels = albedo
-                            .data
-                            .iter()
-                            .map(|_| pbr.roughness_factor.map_or(0.8, |r| r as f32))
-                            .map(|r| Vec3::new(0.0, r, 0.0))
-                            .collect();
-
-                        Texture {
-                            data: pixels,
-                            width: albedo.width,
-                            height: albedo.height,
-                        }
-                    });
-
-                    MaterialType::TextureLambertian(LambertianBase {
-                        name,
-                        albedo,
-                        normal_texture,
-                        orm: roughness,
-                        alpha: 1.0,
-                    })
-                } else {
-                    let rgba = pbr.base_color_factor.unwrap_or(vec![1.0, 1.0, 1.0, 1.0]);
-                    MaterialType::Lambertian(LambertianBase {
-                        name,
-                        albedo: rgba[..3].into(),
-                        normal_texture,
-                        orm: Vec3::new(1.0, pbr.roughness_factor.unwrap() as f32, 0.0),
-                        alpha: rgba[3] as f32,
-                    })
-                }
-            }
-        };
-
-        materials.push(material);
+            &pbr,
+            extensions.ior.map(|i| i.ior),
+            transmission_factor,
+        );
     }
-    materials
+
+    match pbr.base_color_texture {
+        Some(ref tex) => {
+            build_textured_lambertian(name, &pbr, load(tex.index), normal_texture, load)
+        }
+        None => build_solid_lambertian(name, &pbr, normal_texture),
+    }
+}
+
+fn build_dielectric(
+    name: String,
+    pbr: &PbrMetallicRoughness,
+    ior: Option<f64>,
+    transmission_factor: f64,
+) -> MaterialType {
+    let ior = ior.unwrap_or(1.5);
+    let albedo = pbr
+        .base_color_factor
+        .as_deref()
+        .unwrap_or(&[1.0, 1.0, 1.0, 1.0]);
+
+    MaterialType::Dielectric(Dielectric::new(
+        name,
+        Some(albedo[..3].into()),
+        ior as f32,
+        transmission_factor as f32,
+    ))
+}
+
+fn build_textured_lambertian(
+    name: String,
+    pbr: &PbrMetallicRoughness,
+    albedo: Texture,
+    normal_texture: Option<Texture>,
+    load: impl Fn(usize) -> Texture,
+) -> MaterialType {
+    let roughness_texture = pbr
+        .metallic_roughness_texture
+        .as_ref()
+        .map(|tex| load(tex.index));
+
+    let roughness = roughness_texture.unwrap_or_else(|| {
+        let r = pbr.roughness_factor.map_or(0.8, |r| r as f32);
+        Texture {
+            data: albedo.data.iter().map(|_| Vec3::new(0.0, r, 0.0)).collect(),
+            width: albedo.width,
+            height: albedo.height,
+        }
+    });
+
+    MaterialType::TextureLambertian(LambertianBase {
+        name,
+        albedo,
+        normal_texture,
+        orm: roughness,
+        alpha: 1.0,
+    })
+}
+
+fn build_solid_lambertian(
+    name: String,
+    pbr: &PbrMetallicRoughness,
+    normal_texture: Option<Texture>,
+) -> MaterialType {
+    let rgba = pbr
+        .base_color_factor
+        .as_deref()
+        .unwrap_or(&[1.0, 1.0, 1.0, 1.0]);
+
+    MaterialType::Lambertian(LambertianBase {
+        name,
+        albedo: rgba[..3].into(),
+        normal_texture,
+        orm: Vec3::new(1.0, pbr.roughness_factor.unwrap() as f32, 0.0),
+        alpha: rgba[3] as f32,
+    })
 }
 
 fn parse_parent(node: &Node, gltf_data: &GltfData, instance_bases: &[Arc<HittableType>]) -> Parent {
