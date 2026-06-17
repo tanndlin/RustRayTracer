@@ -227,3 +227,13 @@ pub struct TextureElement {
     pub sampler: usize,
     pub source: usize, // image index
 }
+
+impl ComponentType {
+    pub fn size(&self) -> usize {
+        match self {
+            ComponentType::Byte | ComponentType::UnsignedByte => 1,
+            ComponentType::Short | ComponentType::UnsignedShort => 2,
+            ComponentType::UnsignedInt | ComponentType::Float => 4,
+        }
+    }
+}

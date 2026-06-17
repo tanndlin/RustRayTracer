@@ -5,9 +5,8 @@ impl Accessor {
         let buffer_view = &gltf_data.buffer_views[self.buffer_view];
 
         let byte_offset = buffer_view.byte_offset.unwrap_or(0) + self.byte_offset.unwrap_or(0);
-        let byte_length = self.count
-            * self.r#type.component_count() as usize
-            * component_size(&self.component_type) as usize;
+        let byte_length =
+            self.count * self.r#type.component_count() as usize * self.component_type.size();
 
         let data = &binary[buffer_view.buffer][byte_offset..(byte_offset + byte_length)];
 
@@ -56,7 +55,7 @@ impl From<(&AccessorType, &ComponentType, &[u8])> for AccessorData {
 
 impl AccessorData {
     fn into_scalar(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Scalar(
             data.chunks(cs)
                 .map(|chunk| read_component(component_type, chunk))
@@ -65,7 +64,7 @@ impl AccessorData {
     }
 
     fn into_vec2(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Vec2(
             data.chunks(cs * 2)
                 .map(|chunk| read_components(component_type, cs, chunk))
@@ -74,7 +73,7 @@ impl AccessorData {
     }
 
     fn into_vec3(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Vec3(
             data.chunks(cs * 3)
                 .map(|chunk| read_components(component_type, cs, chunk))
@@ -83,7 +82,7 @@ impl AccessorData {
     }
 
     fn into_vec4(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Vec4(
             data.chunks(cs * 4)
                 .map(|chunk| read_components(component_type, cs, chunk))
@@ -92,7 +91,7 @@ impl AccessorData {
     }
 
     fn into_mat2(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Mat2(
             data.chunks(cs * 4)
                 .map(|chunk| {
@@ -105,7 +104,7 @@ impl AccessorData {
     }
 
     fn into_mat3(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Mat3(
             data.chunks(cs * 9)
                 .map(|chunk| {
@@ -118,7 +117,7 @@ impl AccessorData {
     }
 
     fn into_mat4(component_type: &ComponentType, data: &[u8]) -> Self {
-        let cs = component_size(component_type) as usize;
+        let cs = component_type.size();
         AccessorData::Mat4(
             data.chunks(cs * 16)
                 .map(|chunk| {
@@ -128,14 +127,6 @@ impl AccessorData {
                 })
                 .collect(),
         )
-    }
-}
-
-fn component_size(ct: &ComponentType) -> u8 {
-    match ct {
-        ComponentType::Byte | ComponentType::UnsignedByte => 1,
-        ComponentType::Short | ComponentType::UnsignedShort => 2,
-        ComponentType::UnsignedInt | ComponentType::Float => 4,
     }
 }
 

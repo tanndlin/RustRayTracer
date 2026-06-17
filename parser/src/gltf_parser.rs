@@ -1,4 +1,4 @@
-use std::{path::Path, sync::Arc};
+use std::{fs::read_to_string, path::Path, sync::Arc};
 
 use geometry::{HittableType, Instance, Parent};
 use gltf::{GltfData, Material, Node};
@@ -8,11 +8,11 @@ use util::Vec3;
 use crate::glb::glb_parser::load_texture;
 
 pub fn parse_gltf(path: &str, mat_offset: usize) -> (Vec<HittableType>, Vec<MaterialType>) {
-    let gltf_data = std::fs::read_to_string(path).expect("Failed to read .gltf file");
+    let gltf_data = read_to_string(path).expect("Failed to read .gltf file");
     let gltf_data: GltfData = serde_json::from_str(&gltf_data).expect("Failed to parse .gltf file");
 
     // prepend the directory of the gltf file to the buffer uris
-    let base_path = std::path::Path::new(path)
+    let base_path = Path::new(path)
         .parent()
         .expect("Failed to get parent directory of .gltf file");
 
